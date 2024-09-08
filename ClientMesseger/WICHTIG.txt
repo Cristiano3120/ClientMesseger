@@ -1,0 +1,2 @@
+﻿Der Client benutzt zu viel ram!
+//use Microsoft blend

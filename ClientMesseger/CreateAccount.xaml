@@ -1,0 +1,153 @@
+﻿<Window x:Class="ClientMesseger.CreateAccount"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+        xmlns:local="clr-namespace:ClientMesseger"
+        mc:Ignorable="d"
+        Title="CreateAccount" Height="450" Width="800" WindowStartupLocation="CenterScreen" MinHeight="450" MinWidth="800" ResizeMode="CanResize"
+        WindowStyle ="None" Background="#1f1e1f">
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="0" ResizeBorderThickness="10" CornerRadius="0" CaptionHeight="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Custom Title Bar -->
+        <Grid Grid.Row="0" Background="#333" Height="30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Go Back Button -->
+            <Button Grid.Column="0" Width="35" Height="30" Click="GoBackButton_Click" Background="Transparent" BorderBrush="Transparent">
+                <Button.Content>
+                    <Viewbox Stretch="Uniform" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                        <Canvas Height="24" Width="24">
+                            <Path Stroke="#000" StrokeStartLineCap="round" StrokeEndLineCap="round" StrokeLineJoin="round" StrokeThickness="1.2" Data="M6 12h12M6 12l5-5m-5 5 5 5" Fill="#00000000" />
+                        </Canvas>
+                    </Viewbox>
+                </Button.Content>
+            </Button>
+
+            <!-- Minimize Button -->
+            <Button Grid.Column="2" x:Name="btnMinimize" Height="30" Width="30" VerticalAlignment="Center" HorizontalAlignment="Right" Background="Transparent" BorderBrush="Transparent" Content="-" FontSize="20" Foreground="Black"/>
+
+            <!-- Maximize Button -->
+            <Button Grid.Column="3" x:Name="btnMaximize" Height="30" Width="30" VerticalAlignment="Center" HorizontalAlignment="Right" Background="Transparent" BorderBrush="Transparent" Content="🗖" Foreground="Black"/>
+
+            <!-- Close Button -->
+            <Button Grid.Column="4" x:Name="btnClose" Height="30" Width="30" VerticalAlignment="Center" HorizontalAlignment="Right" Background="Transparent" BorderBrush="Transparent" Content="X" Foreground="Black"/>
+        </Grid>
+
+        <!-- Main Grid Layout -->
+        <Grid Grid.Row="1" x:Name="mainGrid" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <!-- Row for Error Bubble -->
+                <RowDefinition Height="*" />
+                <!-- Row for Form Elements -->
+            </Grid.RowDefinitions>
+
+            <!-- Error Bubble -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Top" Name="ErrorGrid" Visibility="Hidden" Grid.Row="0">
+                <Grid>
+                    <Border Background="LightGray" BorderBrush="Black" BorderThickness="1" CornerRadius="10" Padding="10"
+                            HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="Email or password was wrong" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="ErrorTextblock" Foreground="Black"/>
+                    </Border>
+                    <Polygon Points="0,0 20,0 10,20" Fill="LightGray" Stroke="Black" StrokeThickness="1"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Margin="0,70,0,0"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Polygon.RenderTransform>
+                            <TranslateTransform X="0" Y="0"/>
+                        </Polygon.RenderTransform>
+                    </Polygon>
+                </Grid>
+            </Grid>
+
+            <!-- Form Elements -->
+            <Grid Margin="20" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="Auto" />
+                    <!-- Extra column for character count -->
+                </Grid.ColumnDefinitions>
+
+                <!-- E-Mail -->
+                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="E-Mail:" Foreground="White"/>
+                <TextBox x:Name="Email" Grid.Row="0" Grid.Column="1" Width="200" Height="25" Margin="10,0,5,5" VerticalAlignment="Center" HorizontalAlignment="Left" Tag="Enter your email"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Background="#333" Foreground="White"/>
+
+                <!-- E-Mail Character Count -->
+                <TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,10,5" x:Name="emailCharCount" Foreground="White"/>
+
+                <!-- Username -->
+                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="Username:" Foreground="White"/>
+                <TextBox x:Name="Username" Grid.Row="1" Grid.Column="1" Width="200" Height="25" Margin="10,0,5,5" VerticalAlignment="Center" HorizontalAlignment="Left" Tag="Only letters, 0-9 and '_' are allowed"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Left" MaxLength="15" TextChanged="Username_TextChanged" Background="#333" Foreground="White"/>
+
+                <!-- Username Character Count -->
+                <TextBlock Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,10,5" x:Name="usernameCharCount" Foreground="White"/>
+
+                <!-- Password -->
+                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="Password:" Foreground="White"/>
+                <TextBox x:Name="Password" Grid.Row="2" Grid.Column="1" Width="200" Height="25" Margin="10,0,5,5" VerticalAlignment="Center" HorizontalAlignment="Left" Tag="Enter your password"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Left" MaxLength="27" TextChanged="Password_TextChanged" TextWrapping="NoWrap" Background="#333" Foreground="White"/>
+
+                <!-- Password Character Count -->
+                <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,10,5" x:Name="passwordCharCount" Foreground="White"/>
+
+                <!-- First Name -->
+                <TextBlock Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="First Name:" Foreground="White"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Width="200" Height="25" Margin="10,0,5,5" VerticalAlignment="Center" HorizontalAlignment="Left" x:Name="FirstName" Tag="Enter your first name"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Left" MaxLength="20" TextChanged="FirstName_TextChanged" Background="#333" Foreground="White"/>
+
+                <!-- First Name Character Count -->
+                <TextBlock Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,10,5" x:Name="firstNameCharCount" Foreground="White"/>
+
+                <!-- Last Name -->
+                <TextBlock Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="Last Name:" Foreground="White"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Width="200" Height="25" Margin="10,0,5,5" VerticalAlignment="Center" HorizontalAlignment="Left" x:Name="LastName" Tag="Enter your last name"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Left" MaxLength="27" TextChanged="LastName_TextChanged" TextWrapping="NoWrap" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Hidden" Background="#333" Foreground="White"/>
+
+                <!-- Last Name Character Count -->
+                <TextBlock Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,10,5" x:Name="lastNameCharCount" Foreground="White"/>
+
+                <!-- Geburtsdatum -->
+                <TextBlock Grid.Row="5" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="10" Text="Geburtsdatum:" Foreground="White"/>
+                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,10,5">
+                    <TextBox Width="50" Height="25" Margin="0,0,5,0" VerticalAlignment="Center" x:Name="Day" MaxLength="2" Tag="Tag"
+                             VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="#333" Foreground="White" PreviewTextInput="TextBox_PreviewTextInputDay" />
+                    <TextBox Width="50" Height="25" Margin="0,0,5,0" VerticalAlignment="Center" x:Name="Month" MaxLength="2" Tag="Monat"
+                             VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="#333" Foreground="White" PreviewTextInput="TextBox_PreviewTextInputMonth"/>
+                    <TextBox Width="90" Height="25" VerticalAlignment="Center" x:Name="Year" MaxLength="4" Tag="Jahr"
+                             VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Background="#333" Foreground="White" PreviewTextInput="TextBox_PreviewTextInputYear"/>
+                </StackPanel>
+
+                <!-- Sign Up Button -->
+                <Button Grid.Row="6" Grid.ColumnSpan="3" Width="100" Height="30" Margin="10,20,10,0" VerticalAlignment="Center" HorizontalAlignment="Center" Content="Sign Up" Name="SignUpButton" Click="SignUpButton_Click" Background="#333" Foreground="White"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
