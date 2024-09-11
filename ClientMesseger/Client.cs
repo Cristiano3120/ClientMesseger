@@ -44,7 +44,7 @@ namespace ClientMesseger
                     login.Show();
                     thisWindow.CloseWindow();
                 });
-                TryToAutoLogin();
+                //TryToAutoLogin();
             }
             catch (SocketException ex)
             {
@@ -69,7 +69,7 @@ namespace ClientMesseger
             {
                 var loadingScreen = new MainWindow();
                 loadingScreen.Show();
-                ClientUI.CloseAllWindowsExceptOne(typeof(MainWindow));
+                ClientUI.CloseAllWindowsExceptOne(loadingScreen);
             });
         }
 
@@ -95,6 +95,10 @@ namespace ClientMesseger
                     var jsonString = JsonSerializer.Serialize(payload);
                     _ = SendPayloadAsync(jsonString);
                 }
+            }
+            else
+            {
+                Console.WriteLine("File for auto logn is couldnt be found.");
             }
         }
 
@@ -130,13 +134,13 @@ namespace ClientMesseger
                                 {
                                     var createAccWindow = new CreateAccount("Something went wrong while trying to create an Account. Try again!");
                                     createAccWindow.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(typeof(CreateAccount));
+                                    ClientUI.CloseAllWindowsExceptOne(createAccWindow);
                                 }
                                 else
                                 {
                                     var home = new Home();
                                     home.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(typeof(Home));
+                                    ClientUI.CloseAllWindowsExceptOne(home);
                                 }
                             });
                             break;
@@ -172,7 +176,7 @@ namespace ClientMesseger
                                             writer.WriteLine(email);
                                             writer.WriteLine(password);
                                         }
-                                        ClientUI.CloseAllWindowsExceptOne(typeof(Home));
+                                        ClientUI.CloseAllWindowsExceptOne(home);
                                     });
                                     break;
                                 default:

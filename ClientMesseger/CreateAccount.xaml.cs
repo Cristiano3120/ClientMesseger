@@ -26,11 +26,13 @@ namespace ClientMesseger
         public CreateAccount(string error)
         {
             InitializeComponent();
+            _stopwatch = new Stopwatch();
             btnMinimize.Click += ClientUI.BtnMinimize_Click;
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
             Client.OnReceivedCode4 += ResponseCode4;
+            _loginWindow = new Login();
             _ = CallErrorBox(error);
         }
 
@@ -42,6 +44,7 @@ namespace ClientMesseger
         public CreateAccount(Window window)
         {
             InitializeComponent();
+            _stopwatch = new Stopwatch();
             btnMinimize.Click += ClientUI.BtnMinimize_Click;
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
@@ -312,6 +315,7 @@ namespace ClientMesseger
                 _ = Client.SendPayloadAsync(jsonString);
                 var loginWindow = _loginWindow as IWindowExtras;
                 loginWindow!.CloseWindow();
+                Console.WriteLine($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
                 CloseWindow();

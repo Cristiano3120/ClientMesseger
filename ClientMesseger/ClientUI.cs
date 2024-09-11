@@ -68,11 +68,6 @@ namespace ClientMesseger
 
         #endregion
 
-        /// <summary>
-        /// Gets an open window by searching for it in the current opned windows list.
-        /// </summary>
-        /// <param name="window">The type of window it should search for</param>
-        /// <returns>If found it returns the window</returns>
         public static IWindowExtras? GetWindow(Type window)
         {
             foreach (Window item in Application.Current.Windows)
@@ -86,11 +81,11 @@ namespace ClientMesseger
             return null;
         }
 
-        public static void CloseAllWindowsExceptOne(Type window)
+        public static void CloseAllWindowsExceptOne(Window window)
         {
             foreach (Window item in Application.Current.Windows)
             {
-                if (item.GetType() != window)
+                if (item != window)
                 {
                     if (item is IWindowExtras windowToClose)
                     {
@@ -142,12 +137,6 @@ namespace ClientMesseger
             return null;
         }
 
-        /// <summary>
-        /// Checks if the user can send a request to the Server or if he has to wait.
-        /// </summary>
-        /// <param name="stopwatch">The stopwatch which indicates when the last request was sent.</param>
-        /// <returns>Returns <c>-1</c> or <c>0</c> if the user can send a request.
-        /// Else the user has to wait the amount of seconds that this returns.</returns>
         public static double CheckIfCanSendRequest(Stopwatch stopwatch)
         {
             if (stopwatch.IsRunning)
