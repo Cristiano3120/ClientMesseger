@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace ClientMesseger
 {
-    internal sealed class ClientUI
+    internal static class ClientUI
     {
         #region Methods for basic interaction with an window like closing.
 
@@ -42,7 +42,7 @@ namespace ClientMesseger
         /// <summary>
         /// Only closes the current window.
         /// </summary>
-        private static void BtnCloseCurrentWindow(object sender, RoutedEventArgs e)
+        public static void BtnCloseCurrentWindow(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             Window? window = FindVisualParent<Window>(button!);
@@ -68,14 +68,14 @@ namespace ClientMesseger
 
         #endregion
 
-        public static IWindowExtras? GetWindow(Type window)
+        public static Window? GetWindow(Type window)
         {
             foreach (Window item in Application.Current.Windows)
             {
                 if (item.GetType() == window)
                 {
                     Console.WriteLine("Returning window");
-                    return item as IWindowExtras;
+                    return item;
                 }
             }
             return null;
@@ -87,14 +87,11 @@ namespace ClientMesseger
             {
                 if (item != window)
                 {
-                    if (item is IWindowExtras windowToClose)
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            Console.WriteLine("Closing a window");
-                            windowToClose.CloseWindow();
-                        });
-                    }
+                        Console.WriteLine("Closing a window");
+                        item.Close();
+                    });
                 }
             }
         }

@@ -8,7 +8,7 @@ namespace ClientMesseger
     /// <summary>
     /// The logic behind the Verification screen (Verification.xaml)
     /// </summary>
-    public sealed partial class Verification : Window, IWindowExtras
+    public sealed partial class Verification : Window
     {
         private readonly User _user;
         private readonly CreateAccount _window;
@@ -35,18 +35,6 @@ namespace ClientMesseger
             _stopwatch = new Stopwatch();
         }
 
-        /// <summary>
-        /// Unsubscribes from the events and closes this Window
-        /// </summary>
-        public void CloseWindow()
-        {
-            btnMinimize.Click -= ClientUI.BtnMinimize_Click;
-            btnMaximize.Click -= ClientUI.BtnMaximize_Click;
-            btnClose.Click -= ClientUI.BtnCloseShutdown_Click;
-            MouseLeftButtonDown -= ClientUI.Window_MouseLeftButtonDown;
-            Close();
-        }
-
         #region Buttons_Click
         /// <summary>
         /// The click logic for the hyperlink.
@@ -55,7 +43,7 @@ namespace ClientMesseger
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
             _window.Show();
-            CloseWindow();
+            Close();
         }
 
         /// <summary>

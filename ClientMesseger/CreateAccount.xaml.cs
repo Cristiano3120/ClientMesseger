@@ -10,7 +10,7 @@ namespace ClientMesseger
     /// <summary>
     /// The logic behind the Account creation screen (CreateAccount.xaml)
     /// </summary>
-    public sealed partial class CreateAccount : Window, IWindowExtras
+    public sealed partial class CreateAccount : Window
     {
         #pragma warning disable CS8618
         private readonly Window _loginWindow;
@@ -49,7 +49,6 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
-            Client.OnReceivedCode4 += ResponseCode4;
             _loginWindow = window;
         }
 
@@ -112,7 +111,7 @@ namespace ClientMesseger
             {
                 _loginWindow.Show();
             }
-            CloseWindow();
+            Close();
         }
 
         #endregion
@@ -313,29 +312,17 @@ namespace ClientMesseger
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
-                var loginWindow = _loginWindow as IWindowExtras;
-                loginWindow!.CloseWindow();
+                var loginWindow = _loginWindow;
+                loginWindow!.Close();
                 Console.WriteLine($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
-                CloseWindow();
+                Close();
             }
             else
             {
                 _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
             }
-        }
-
-        /// <summary>
-        /// Unsubscribes from the events and closes this Window
-        /// </summary>
-        public void CloseWindow()
-        {
-            btnMinimize.Click -= ClientUI.BtnMinimize_Click;
-            btnMaximize.Click -= ClientUI.BtnMaximize_Click;
-            btnClose.Click -= ClientUI.BtnCloseShutdown_Click;
-            MouseLeftButtonDown -= ClientUI.Window_MouseLeftButtonDown;
-            Close();
         }
 
         /// <summary>

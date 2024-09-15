@@ -14,12 +14,10 @@ namespace ClientMesseger
         public static void Initialize()
         {
             GenerateAesKey();
-            Client.OnReceivedCode0 += SaveRSAKey;
         }
 
         public static void SaveRSAKey(JsonElement root)
         {
-            Client.OnReceivedCode0 -= SaveRSAKey;
             _publicServerRSAKey.Modulus = root.GetProperty("modulus").GetBytesFromBase64();
             _publicServerRSAKey.Exponent = root.GetProperty("exponent").GetBytesFromBase64();
             SendAesKey();

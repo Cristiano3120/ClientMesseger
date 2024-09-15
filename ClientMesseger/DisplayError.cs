@@ -20,39 +20,33 @@ namespace ClientMesseger
 
         public static void DisplayBasicErrorInfos(Exception ex, string className, string methodName)
         {
-            var error = $"Error({className}.{methodName}): {ex.Message}";
-            Console.WriteLine(error);
-            Log(error);
+            Log($"Error({className}.{methodName}): {ex.Message}");
         }
 
         public static void ObjectDisposedException(ObjectDisposedException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            var error = $"Error: The object {ex.ObjectName} was disposed";
-            Console.WriteLine($"Error: The object {ex.ObjectName} was disposed");
-            Log(error);
+            Log($"Error: The object {ex.ObjectName} was disposed");
         }
 
         public static void SocketException(SocketException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            var error = $"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}";
-            Console.WriteLine(error);
-            Log(error);
+            Log($"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}");
         }
 
-        private static void Log(string content)
+        public static void ArgumentNullException(ArgumentNullException ex, string className, string methodName)
         {
-            if (File.Exists(_loggingFile))
+            DisplayBasicErrorInfos(ex, className, methodName);
+            Log($"Error(Var that was null): {ex.ParamName}");
+        }
+
+        public static void Log(string error)
+        {
+            Console.WriteLine(error);
+            using (var writer = new StreamWriter(_loggingFile, true))
             {
-                using (var writer = new StreamWriter(_loggingFile, false))
-                {
-                    writer.WriteLine(content);
-                }
-            }
-            else
-            {
-                Console.WriteLine("Couldn´t write the error into the logging File because it doesn´t exist.");
+                writer.WriteLine($"[{DateTime.UtcNow.ToString("HH:mm:ss")}] {error}");
             }
         }
     }

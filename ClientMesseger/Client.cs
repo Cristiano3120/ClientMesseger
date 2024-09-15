@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.CodeDom;
+using System.IO;
 using System.IO.IsolatedStorage;
 using System.Net;
 using System.Net.Sockets;
@@ -17,7 +18,6 @@ namespace ClientMesseger
         #pragma warning disable CS8618
         private static TcpClient _client;
         internal delegate void MessageReceivedEventHandler(JsonElement root);
-        internal static event MessageReceivedEventHandler OnReceivedCode0;
         internal static event MessageReceivedEventHandler OnReceivedCode4;
 
         public static async Task Start()
@@ -28,33 +28,28 @@ namespace ClientMesseger
             var cancellationToken = new CancellationTokenSource().Token;
             var ip = IPAddress.Parse("192.168.178.74");
             var port = 50000;
-        Connect:
+            Connect:
             try
             {
                 Console.WriteLine("Trying to connect to server");
                 await _client.ConnectAsync(ip, port, cancellationToken);
                 Console.WriteLine("Connection to server succesful");
+                AccessFriendlistFile(FileModeEnum.Create);
                 Security.Initialize();
                 _ = Task.Run(() => { _ = ListenForMessages(); });
-                var thisWindow = ClientUI.GetWindow(typeof(MainWindow));
-                if (thisWindow == null) return;
+                var loadingWindow = ClientUI.GetWindow(typeof(MainWindow));
+                if (loadingWindow == null) return;
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     var login = new Login();
                     login.Show();
-                    thisWindow.CloseWindow();
+                    loadingWindow.Close();
                 });
-                //TryToAutoLogin();
+                TryToAutoLogin();
             }
             catch (SocketException ex)
             {
                 DisplayError.SocketException(ex, "Client", "Start()");
-                await Task.Delay(3000);
-                goto Connect;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error(Client.Start()): {ex.Message}");
                 await Task.Delay(3000);
                 goto Connect;
             }
@@ -73,10 +68,62 @@ namespace ClientMesseger
             });
         }
 
+        public static List<string>? AccessFriendlistFile(FileModeEnum fileMode, string personToAdd = "")
+        {
+            var filename = "Friendlist.txt";
+            try
+            {
+                using var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly();
+
+                if (!isoStorage.FileExists(filename) && fileMode != FileModeEnum.Create)
+                {
+                    Restart();
+                    throw new FileNotFoundException("Friendlist file wasn´t found!");
+                }
+
+                switch (fileMode)
+                {
+                    case FileModeEnum.Create:
+                        if (!isoStorage.FileExists(filename))
+                        {
+                            isoStorage.CreateFile(filename);
+                        }
+                    return null;    
+
+                    case FileModeEnum.Read:
+                        using (var file = isoStorage.OpenFile(filename, FileMode.Open))
+                        using (var reader = new StreamReader(file))
+                        {
+                            var friends = new List<string>();
+                            string? friend;
+                            while ((friend = reader.ReadLine()) != null)
+                            {
+                                friends.Add(friend);
+                            }
+                            return friends;
+                        }
+
+                    case FileModeEnum.Write:
+                        using (var file = isoStorage.OpenFile(filename, FileMode.Append))
+                        using (var writer = new StreamWriter(file))
+                        {
+                            writer.WriteLine(personToAdd);
+                            return null;
+                        }             
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                DisplayError.DisplayBasicErrorInfos(ex, "Client", "AccessFriendlist");
+                return null;
+            }
+        }
+
         private static void TryToAutoLogin()
         {
             using var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly();
-            string fileName = "UserLoginData.txt";
+            var fileName = "UserLoginData.txt";
             if (isoStorage.FileExists(fileName))
             {
                 Console.WriteLine("Trying to auto login");
@@ -98,7 +145,7 @@ namespace ClientMesseger
             }
             else
             {
-                Console.WriteLine("File for auto logn is couldnt be found.");
+                Console.WriteLine("File for auto login couldnt be found.");
             }
         }
 
@@ -118,7 +165,7 @@ namespace ClientMesseger
                     switch (code)
                     {
                         case 0: //Receiving RSA key
-                            OnReceivedCode0?.Invoke(root);
+                            Security.SaveRSAKey(root);
                             break;
                         case 4: //Response trying to make an acc
                             Application.Current.Dispatcher.Invoke(() =>
@@ -169,9 +216,9 @@ namespace ClientMesseger
                                     {
                                         var home = new Home();
                                         home.Show();
-                                        using (IsolatedStorageFile isoStorage = IsolatedStorageFile.GetUserStoreForAssembly())
-                                        using (IsolatedStorageFileStream isoStream = new IsolatedStorageFileStream("UserLoginData.txt", FileMode.OpenOrCreate, isoStorage))
-                                        using (StreamWriter writer = new StreamWriter(isoStream))
+                                        using (var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly())
+                                        using (var isoStream = new IsolatedStorageFileStream("UserLoginData.txt", FileMode.OpenOrCreate, isoStorage))
+                                        using (var writer = new StreamWriter(isoStream))
                                         {
                                             writer.WriteLine(email);
                                             writer.WriteLine(password);
@@ -190,11 +237,6 @@ namespace ClientMesseger
                             }
                             break;
                     }
-                }
-                catch (NotImplementedException ex)
-                {
-                    Console.WriteLine($"Error(ListenForMessages(): {ex.Message})");
-                    return;
                 }
                 catch (Exception ex)
                 {

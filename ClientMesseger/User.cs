@@ -6,7 +6,7 @@ namespace ClientMesseger
     /// This class presents basic infos about a User.
     /// It implements IEnumerable (string)
     /// </summary>
-    public class User : IEnumerable<string>
+    public sealed class User : IEnumerable<string>
     {
         public required string Email { get; set; }
         public string Password { get; set; } = string.Empty;

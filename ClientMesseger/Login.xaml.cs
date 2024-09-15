@@ -7,7 +7,7 @@ namespace ClientMesseger
     /// <summary>
     /// The logic behind the Login screen (Login.xaml)
     /// </summary>
-    public sealed partial class Login : Window, IWindowExtras
+    public sealed partial class Login : Window
     {
         private readonly Stopwatch _stopwatch;
 
@@ -56,15 +56,6 @@ namespace ClientMesseger
         }
 
         #endregion
-
-        public void CloseWindow()
-        {
-            btnMinimize.Click -= ClientUI.BtnMinimize_Click;
-            btnMaximize.Click -= ClientUI.BtnMaximize_Click;
-            btnClose.Click -= ClientUI.BtnCloseShutdown_Click;
-            MouseLeftButtonDown -= ClientUI.Window_MouseLeftButtonDown;
-            Close();
-        }
 
         /// <summary>
         /// Reveals a Error box to the user which will display the error message for 5 seconds
