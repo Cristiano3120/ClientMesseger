@@ -1,5 +1,4 @@
-﻿using System.CodeDom;
-using System.IO;
+﻿using System.IO;
 using System.IO.IsolatedStorage;
 using System.Net;
 using System.Net.Sockets;
@@ -7,6 +6,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace ClientMesseger
 {
@@ -15,10 +16,13 @@ namespace ClientMesseger
     /// </summary>
     internal static class Client
     {
-        #pragma warning disable CS8618
+#pragma warning disable CS8618
         private static TcpClient _client;
+        public static string? _username { get; private set; }
         internal delegate void MessageReceivedEventHandler(JsonElement root);
         internal static event MessageReceivedEventHandler OnReceivedCode4;
+        public const string friendlistFile = "Friendlist.txt";
+        public const string pendingFriendRequests = "PendingFriendRequests.txt";
 
         public static async Task Start()
         {
@@ -28,13 +32,14 @@ namespace ClientMesseger
             var cancellationToken = new CancellationTokenSource().Token;
             var ip = IPAddress.Parse("192.168.178.74");
             var port = 50000;
-            Connect:
+        Connect:
             try
             {
-                Console.WriteLine("Trying to connect to server");
+                DisplayError.Log("Trying to connect to server");
                 await _client.ConnectAsync(ip, port, cancellationToken);
-                Console.WriteLine("Connection to server succesful");
-                AccessFriendlistFile(FileModeEnum.Create);
+                DisplayError.Log("Connection to server succesful");
+                AccessFile(friendlistFile, FileModeEnum.Create);
+                AccessFile(pendingFriendRequests, FileModeEnum.Create);
                 Security.Initialize();
                 _ = Task.Run(() => { _ = ListenForMessages(); });
                 var loadingWindow = ClientUI.GetWindow(typeof(MainWindow));
@@ -45,7 +50,7 @@ namespace ClientMesseger
                     login.Show();
                     loadingWindow.Close();
                 });
-                TryToAutoLogin();
+                //TryToAutoLogin();
             }
             catch (SocketException ex)
             {
@@ -68,9 +73,8 @@ namespace ClientMesseger
             });
         }
 
-        public static List<string>? AccessFriendlistFile(FileModeEnum fileMode, string personToAdd = "")
+        public static List<string>? AccessFile(string filename, FileModeEnum fileMode, string personToModify = "")
         {
-            var filename = "Friendlist.txt";
             try
             {
                 using var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly();
@@ -88,7 +92,7 @@ namespace ClientMesseger
                         {
                             isoStorage.CreateFile(filename);
                         }
-                    return null;    
+                        return null;
 
                     case FileModeEnum.Read:
                         using (var file = isoStorage.OpenFile(filename, FileMode.Open))
@@ -107,9 +111,20 @@ namespace ClientMesseger
                         using (var file = isoStorage.OpenFile(filename, FileMode.Append))
                         using (var writer = new StreamWriter(file))
                         {
-                            writer.WriteLine(personToAdd);
+                            writer.WriteLine(personToModify);
                             return null;
-                        }             
+                        }
+                    case FileModeEnum.DeleteLine:
+                        using (IsolatedStorageFile isoStore = IsolatedStorageFile.GetUserStoreForApplication())
+                        {
+                            if (isoStore.FileExists(filename))
+                            {
+                                var lines = ReadAllLinesFromFile(isoStore, filename);
+                                var updatedLines = lines.Where(line => !line.Contains(personToModify)).ToArray();
+                                WriteAllLinesToFile(isoStore, filename, updatedLines);
+                            }
+                            break;
+                        }
                 }
                 return null;
             }
@@ -120,13 +135,44 @@ namespace ClientMesseger
             }
         }
 
-        private static void TryToAutoLogin()
+        #region Modifying File
+
+        static string[] ReadAllLinesFromFile(IsolatedStorageFile isoStore, string filename)
+        {
+            using (var fileStream = new IsolatedStorageFileStream(filename, FileMode.Open, isoStore))
+            using (var reader = new StreamReader(fileStream))
+            {
+                var lines = new List<string>();
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    lines.Add(line);
+                }
+                return lines.ToArray();
+            }
+        }
+
+        static void WriteAllLinesToFile(IsolatedStorageFile isoStore, string filename, string[] lines)
+        {
+            using (var fileStream = new IsolatedStorageFileStream(filename, FileMode.Create, isoStore))
+            using (var writer = new StreamWriter(fileStream))
+            {
+                foreach (var line in lines)
+                {
+                    writer.WriteLine(line);
+                }
+            }
+        }
+
+    #endregion
+
+    private static void TryToAutoLogin()
         {
             using var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly();
             var fileName = "UserLoginData.txt";
             if (isoStorage.FileExists(fileName))
             {
-                Console.WriteLine("Trying to auto login");
+                DisplayError.Log("Trying to auto login");
                 using IsolatedStorageFileStream isoStream = new IsolatedStorageFileStream(fileName, FileMode.Open, isoStorage);
                 using StreamReader reader = new StreamReader(isoStream);
                 var email = reader.ReadLine();
@@ -145,7 +191,7 @@ namespace ClientMesseger
             }
             else
             {
-                Console.WriteLine("File for auto login couldnt be found.");
+                DisplayError.Log("File for auto login couldnt be found.");
             }
         }
 
@@ -161,7 +207,7 @@ namespace ClientMesseger
                     Array.Copy(buffer, tempBuffer, bytesRead);
                     var root = Security.DecryptMessage(tempBuffer) ?? throw new Exception("Root was null");
                     var code = root.GetProperty("code").GetByte();
-                    Console.WriteLine($"Received code {code}");
+                    DisplayError.Log($"Received code {code}");
                     switch (code)
                     {
                         case 0: //Receiving RSA key
@@ -185,6 +231,17 @@ namespace ClientMesseger
                                 }
                                 else
                                 {
+                                    var email = root.GetProperty("Email").GetString();
+                                    var password = root.GetProperty("Password").GetString();
+                                    var username = root.GetProperty("Username").GetString();
+                                    _username = username;
+                                    using (var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly())
+                                    using (var isoStream = new IsolatedStorageFileStream("UserLoginData.txt", FileMode.OpenOrCreate, isoStorage))
+                                    using (var writer = new StreamWriter(isoStream))
+                                    {
+                                        writer.WriteLine(email);
+                                        writer.WriteLine(password);
+                                    }
                                     var home = new Home();
                                     home.Show();
                                     ClientUI.CloseAllWindowsExceptOne(home);
@@ -195,7 +252,7 @@ namespace ClientMesseger
                             var result = root.GetProperty("result");
                             if (result.ValueKind == JsonValueKind.Null)
                             {
-                                Console.WriteLine("Server couldnt connect to the database.");
+                                DisplayError.Log("Server couldnt connect to the database.");
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     var loginWindow = ClientUI.GetWindow(typeof(Login)) as Login;
@@ -212,17 +269,16 @@ namespace ClientMesseger
                                 case true:
                                     var email = root.GetProperty("email").GetString();
                                     var password = root.GetProperty("password").GetString();
+                                    _username = root.GetProperty("username").GetString();
+                                    if (string.IsNullOrEmpty(_username))
+                                    {
+                                        Application.Current.Shutdown();
+                                    }
+
                                     Application.Current.Dispatcher.Invoke(() =>
                                     {
                                         var home = new Home();
                                         home.Show();
-                                        using (var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly())
-                                        using (var isoStream = new IsolatedStorageFileStream("UserLoginData.txt", FileMode.OpenOrCreate, isoStorage))
-                                        using (var writer = new StreamWriter(isoStream))
-                                        {
-                                            writer.WriteLine(email);
-                                            writer.WriteLine(password);
-                                        }
                                         ClientUI.CloseAllWindowsExceptOne(home);
                                     });
                                     break;
@@ -236,14 +292,40 @@ namespace ClientMesseger
                                     break;
                             }
                             break;
+                        case 11: //Answer to the sent friendRequest
+                            result = root.GetProperty("result");
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                var home = ClientUI.GetWindow(typeof(Home)) as Home;
+                                if (result.ValueKind == JsonValueKind.Null)
+                                {
+                                    _ = home!.SetAddFriendText("Something went wrong! Try again later.", Brushes.White);
+                                }
+                                else if (result.GetBoolean() == false)
+                                {
+                                    _ = home!.SetAddFriendText("The enterd user couldn´t be found!", Brushes.Red);
+                                }
+                                else
+                                {
+                                    _ = home!.SetAddFriendText("Sent a friend request!", Brushes.Green);
+                                }
+                            });
+                            break;
+                        case 12: //Reiceving Friend request
+                            var username = root.GetProperty("usernameSender").GetString();
+                            DisplayError.Log($"{username} added you!");
+                            AccessFile("PendingFriendRequests.txt", FileModeEnum.Write, username!);
+                            var home = ClientUI.GetWindow(typeof(Home)) as Home;
+                            home?.PopulatePendingFriendRequestsList();
+                            break;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error(ListenForMessages(): {ex.Message})");
+                    DisplayError.DisplayBasicErrorInfos(ex, "Client", "ListenForMessages()");
                 }
             }
-            Console.WriteLine("Lost connection to the Server");
+            DisplayError.Log("Lost connection to the Server");
             Restart();
         }
 
@@ -251,7 +333,7 @@ namespace ClientMesseger
         {
             try
             {
-                Console.WriteLine($"Trying to send {encryption} encrypted data");
+                DisplayError.Log($"Trying to send {encryption} encrypted data");
                 var buffer = payload != null ? Encoding.UTF8.GetBytes(payload) : throw new ArgumentNullException(nameof(payload));
                 switch (encryption)
                 {
@@ -274,11 +356,11 @@ namespace ClientMesseger
             }
             catch (ArgumentNullException)
             {
-                Console.WriteLine($"Error(Client.SendPayloadAsync(): Payload was null)");
+                DisplayError.Log($"Error(Client.SendPayloadAsync(): Payload was null)");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error(Client.SendPayloadAsync()): {ex.Message}");
+                DisplayError.Log($"Error(Client.SendPayloadAsync()): {ex.Message}");
             }
         }
 

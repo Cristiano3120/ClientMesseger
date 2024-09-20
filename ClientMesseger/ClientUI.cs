@@ -63,7 +63,7 @@ namespace ClientMesseger
                 window.DragMove();
                 return;
             }
-            Console.WriteLine("Error(ClientUI.Window_MouseLeftButtonDown()): window was null");
+            DisplayError.Log("Error(ClientUI.Window_MouseLeftButtonDown()): window was null");
         }
 
         #endregion
@@ -74,7 +74,7 @@ namespace ClientMesseger
             {
                 if (item.GetType() == window)
                 {
-                    Console.WriteLine("Returning window");
+                    DisplayError.Log("Returning window");
                     return item;
                 }
             }
@@ -89,7 +89,7 @@ namespace ClientMesseger
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        Console.WriteLine("Closing a window");
+                        DisplayError.Log("Closing a window");
                         item.Close();
                     });
                 }
@@ -111,7 +111,7 @@ namespace ClientMesseger
                 });
                 return;
             }
-            Console.WriteLine("Error(ClientUI.ChangeWindowState(): var window was null)");
+            DisplayError.Log("Error(ClientUI.ChangeWindowState(): var window was null)");
         }
 
         /// <summary>
@@ -134,7 +134,7 @@ namespace ClientMesseger
             return null;
         }
 
-        public static double CheckIfCanSendRequest(Stopwatch stopwatch)
+        public static double CheckIfCanSendRequest(Stopwatch stopwatch, float delay = 5)
         {
             if (stopwatch.IsRunning)
             {

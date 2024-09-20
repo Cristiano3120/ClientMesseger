@@ -35,7 +35,7 @@ namespace ClientMesseger
             {
                 _stopwatch.Restart();
             }
-            Console.WriteLine("Sending request to login");
+            DisplayError.Log("Sending request to login");
             var email = Email.Text;
             var password = Password.Text;
             var payload = new

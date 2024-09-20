@@ -27,6 +27,8 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <!-- Neue Spalte für den neuen Button -->
             </Grid.ColumnDefinitions>
 
             <!-- Round Profile Picture and Clickable Text -->
@@ -36,14 +38,17 @@
                         <ImageBrush ImageSource="C:\Users\Crist\Pictures\Ich.png" Stretch="UniformToFill"/>
                     </Ellipse.Fill>
                 </Ellipse>
-                <TextBlock Text="UserName" Foreground="White" VerticalAlignment="Center" FontSize="16"/>
+                <TextBlock x:Name ="UsernameText" Text="UserName" Foreground="White" VerticalAlignment="Center" FontSize="16"/>
             </StackPanel>
 
+            <!-- Pending Friend requests button -->
+            <Button x:Name="showPendingFaButton" Grid.Column="2" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Pending" HorizontalAlignment="Right" Click="ShowPendingFriendRequests"/>
+
             <!-- Friends Button -->
-            <Button x:Name="btnFriends" Grid.Column="2" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Friends" HorizontalAlignment="Right" Click="ShowFriendsPanel"/>
+            <Button x:Name="btnFriends" Grid.Column="3" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Friends" HorizontalAlignment="Right" Click="ShowFriendsPanel"/>
 
             <!-- Add Friend Button -->
-            <Button Grid.Column="3" Height="40" Width="120" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Add Friend" HorizontalAlignment="Right"/>
+            <Button Grid.Column="4" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Add Friend" HorizontalAlignment="Right" Click="ShowAddFriendPanel"/>
         </Grid>
 
         <!-- Main Content Section -->
@@ -53,7 +58,42 @@
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="FriendsPanelTranslateTransform"/>
                 </Grid.RenderTransform>
-                <ItemsControl x:Name="FriendsList" Background="#222" Foreground="White" FontSize="16" Margin="10"/>
+                <ListBox x:Name="FriendsList" Background="#222" Foreground="White" FontSize="16" Margin="10"/>
+            </Grid>
+
+            <!-- Panel for Pending Friend Requests -->
+            <Grid x:Name="PendingFriendRequestsPanel" Background="#222" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="PendingFriendRequestsTranslateTransform"/>
+                </Grid.RenderTransform>
+                <ListBox x:Name="PendingFriendsList" Background="#222" Foreground="White" FontSize="16" Margin="10" HorizontalContentAlignment="Left">
+                    
+                </ListBox>
+            </Grid>
+
+            <!-- Panel for AddFriend List -->
+            <Grid x:Name="AddFriendsPanel" Background="#222" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600">
+                <Grid.RenderTransform>
+                    <TranslateTransform x:Name="AddFriendsPanelTranslateTransform"/>
+                </Grid.RenderTransform>
+
+                <!-- Container für die zentrierten Elemente -->
+                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- TextBlock als Beschriftung für die TextBox -->
+                    <TextBlock x:Name="friendNameTextBlock" Text="Enter a Username" Foreground="White" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,10" Grid.Row="0"/>
+
+                    <!-- TextBox für die Eingabe -->
+                    <TextBox x:Name="friendNameTextBox" Width="300" Height="30" FontSize="14" Grid.Row="1" HorizontalAlignment="Center" Background="#444" Foreground="White" BorderBrush="Transparent" Text=""/>
+
+                    <!-- Button zum Hinzufügen des Freundes -->
+                    <Button x:Name="btnAddFriend" Content="Add Friend" Width="120" Height="30" Grid.Row="2" HorizontalAlignment="Center" Background="#555" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,0" Click="OnFriendAdded_Click"/>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

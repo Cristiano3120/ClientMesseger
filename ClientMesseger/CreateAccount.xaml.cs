@@ -49,6 +49,7 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
+            Client.OnReceivedCode4 += ResponseCode4;
             _loginWindow = window;
         }
 
@@ -118,46 +119,78 @@ namespace ClientMesseger
 
         #region Checking user input
 
-        /// <summary>
-        /// Checks if no textbox is empty.
-        /// </summary>
-        /// <returns>Returns true when no textbox is empty.</returns>
         public bool CheckForWhiteSpaces()
         {
-            if (string.IsNullOrWhiteSpace(Password.Text))
+            if (!string.IsNullOrWhiteSpace(Username.Text))
             {
-                _ = CallErrorBox("The password cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in Username.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The username can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
-            if (string.IsNullOrWhiteSpace(Username.Text))
+
+            if (!string.IsNullOrWhiteSpace(FirstName.Text))
             {
-                _ = CallErrorBox("The username cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in FirstName.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The first name can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
-            if (string.IsNullOrWhiteSpace(FirstName.Text))
+
+            if (!string.IsNullOrWhiteSpace(LastName.Text))
             {
-                _ = CallErrorBox("The first name cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in LastName.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The last name can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
-            if (string.IsNullOrWhiteSpace(LastName.Text))
+
+            if (!string.IsNullOrWhiteSpace(Day.Text))
             {
-                _ = CallErrorBox("The last name cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in Day.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The day can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
-            if (string.IsNullOrWhiteSpace(Day.Text))
+
+            if (!string.IsNullOrWhiteSpace(Month.Text))
             {
-                _ = CallErrorBox("The day cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in Month.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The month can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
-            if (string.IsNullOrWhiteSpace(Month.Text))
+
+            if (!string.IsNullOrWhiteSpace(Year.Text))
             {
-                _ = CallErrorBox("The month cant be empty oder all WhiteSpaces");
-                return false;
-            }
-            if (string.IsNullOrWhiteSpace(Year.Text))
-            {
-                _ = CallErrorBox("The year cant be empty oder all WhiteSpaces");
-                return false;
+                foreach (var c in Year.Text)
+                {
+                    if (char.IsWhiteSpace(c))
+                    {
+                        _ = CallErrorBox("The year can't contain any whitespaces");
+                        return false;
+                    }
+                }
             }
             return true;
         }
@@ -296,6 +329,7 @@ namespace ClientMesseger
             var status = root.GetProperty("status").GetString();
             if (status == "None")
             {
+                DisplayError.Log("Acc can be created!");
                 var verificationCode = new Random().Next(100000, 999999);
                 var payload = new
                 {
@@ -314,13 +348,14 @@ namespace ClientMesseger
                 _ = Client.SendPayloadAsync(jsonString);
                 var loginWindow = _loginWindow;
                 loginWindow!.Close();
-                Console.WriteLine($"Code: {verificationCode}");
+                DisplayError.Log($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
                 Close();
             }
             else
             {
+                DisplayError.Log($"The {status} is already being used. Pls enter another one!");
                 _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
             }
         }
