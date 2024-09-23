@@ -46,7 +46,7 @@ namespace ClientMesseger
             Console.WriteLine(error);
             using (var writer = new StreamWriter(_loggingFile, true))
             {
-                writer.WriteLine($"[{DateTime.UtcNow.ToString("HH:mm:ss")}] {error}");
+                writer.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] {error}");
             }
         }
     }

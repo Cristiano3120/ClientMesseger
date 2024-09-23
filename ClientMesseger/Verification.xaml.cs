@@ -79,7 +79,7 @@ namespace ClientMesseger
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
-                
+
             }
             else
             {

@@ -12,7 +12,7 @@ namespace ClientMesseger
     /// </summary>
     public sealed partial class CreateAccount : Window
     {
-        #pragma warning disable CS8618
+#pragma warning disable CS8618
         private readonly Window _loginWindow;
         private readonly Stopwatch _stopwatch;
         private User _user;
@@ -385,6 +385,6 @@ namespace ClientMesseger
             await Task.Delay(5000);
             ErrorTextblock.Text = string.Empty;
             ErrorGrid.Visibility = Visibility.Hidden;
-        }      
+        }
     }
 }

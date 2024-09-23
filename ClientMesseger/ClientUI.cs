@@ -9,9 +9,6 @@ namespace ClientMesseger
     {
         #region Methods for basic interaction with an window like closing.
 
-        /// <summary>
-        /// Minimizes the window.
-        /// </summary>
         public static void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -19,9 +16,6 @@ namespace ClientMesseger
             ChangeWindowState(window, WindowState.Minimized);
         }
 
-        /// <summary>
-        /// Maximizes the window.
-        /// </summary>
         public static void BtnMaximize_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -29,9 +23,6 @@ namespace ClientMesseger
             ChangeWindowState(window, WindowState.Maximized);
         }
 
-        /// <summary>
-        /// Completly closes the application.
-        /// </summary>
         public static void BtnCloseShutdown_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -39,9 +30,6 @@ namespace ClientMesseger
             Application.Current.Shutdown();
         }
 
-        /// <summary>
-        /// Only closes the current window.
-        /// </summary>
         public static void BtnCloseCurrentWindow(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -138,11 +126,11 @@ namespace ClientMesseger
         {
             if (stopwatch.IsRunning)
             {
-                if (stopwatch.Elapsed.TotalSeconds >= 5)
+                if (stopwatch.Elapsed.TotalSeconds >= delay)
                 {
                     return 0;
                 }
-                return 5 - stopwatch.Elapsed.TotalSeconds;
+                return delay - stopwatch.Elapsed.TotalSeconds;
             }
             return -1;
         }

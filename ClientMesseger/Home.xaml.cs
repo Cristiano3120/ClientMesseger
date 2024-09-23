@@ -1,17 +1,16 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media.Animation;
-using System.Windows.Media;
+﻿using System.Diagnostics;
 using System.Text.Json;
-using System.Diagnostics;
-using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace ClientMesseger
 {
     public partial class Home : Window
     {
-        private List<string>? _friendList;
-        private List<string>? _pendingFriendRequestsList;
+        private StackPanel? _stackPanelPending;
+        private StackPanel? _stackPanelFriends;
         private readonly Stopwatch _stopwatch;
 
         public Home()
@@ -21,10 +20,8 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
-            UsernameText.Text = Client._username;
+            UsernameText.Text = Client.Username;
             _stopwatch = new Stopwatch();
-            PopulateFriendsList();
-            PopulatePendingFriendRequestsList();
         }
 
         public async Task SetAddFriendText(string input, Brush color)
@@ -46,70 +43,126 @@ namespace ClientMesseger
         }
 
         // Freundesliste befüllen
-        private void PopulateFriendsList()
+        public void PopulateFriendsList()
         {
-            _friendList = Client.AccessFile(Client.friendlistFile, FileModeEnum.Read) ?? new();
             FriendsList.Items.Clear();
-            foreach (var friend in _friendList)
+            _stackPanelFriends?.Children.Clear();
+
+            lock (Client.friendsLock)
             {
-                var textBlock = new TextBlock
+                foreach (var (friendUsername, friendId) in Client._friendList)
                 {
-                    Text = friend,
-                    Foreground = Brushes.White,
-                    FontSize = 16,
-                    Margin = new Thickness(10)
-                };
-                FriendsList.Items.Add(textBlock);
+                    _stackPanelFriends = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Margin = new Thickness(5)
+                    };
+
+                    var textBlockUsername = new TextBlock
+                    {
+                        Text = friendUsername,
+                        Foreground = Brushes.White,
+                        FontSize = 18,
+                        Margin = new Thickness(10)
+                    };
+
+                    var blockButton = new Button
+                    {
+                        Content = "Block",
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
+                        Foreground = Brushes.White,
+                        Width = 80,
+                        Height = 30,
+                        Margin = new Thickness(5),
+                        Tag = friendUsername,
+                    };
+
+                    var deleteButton = new Button
+                    {
+                        Content = "Delete",
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e0343c")),
+                        Foreground = Brushes.White,
+                        Width = 80,
+                        Height = 30,
+                        Margin = new Thickness(5),
+                        Tag = friendUsername,
+                    };
+                    blockButton.Click += BlockButton_Click;
+                    deleteButton.Click += DeleteButton_Click;
+                    _stackPanelFriends.Children.Add(textBlockUsername);
+                    _stackPanelFriends.Children.Add(blockButton);
+                    _stackPanelFriends.Children.Add(deleteButton);
+                    FriendsList.Items.Add(_stackPanelFriends);
+                }
             }
         }
 
         //Ausstehende anfragens liste befüllen
         public void PopulatePendingFriendRequestsList()
         {
-            _pendingFriendRequestsList = Client.AccessFile(Client.pendingFriendRequests, FileModeEnum.Read) ?? new();
             PendingFriendsList.Items.Clear();
-            foreach (var pending in _pendingFriendRequestsList)
+            _stackPanelPending?.Children?.Clear();
+
+            lock (Client.pendingLock)
             {
-                var stackPanel = new StackPanel
+                foreach (var pending in Client._pendingFriendRequestsList)
                 {
-                    Orientation = Orientation.Horizontal,
-                    Margin = new Thickness(5)
-                };
+                    _stackPanelPending = new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        Margin = new Thickness(5)
+                    };
 
-                var textBlock = new TextBlock
-                {
-                    Text = pending,
-                    Foreground = Brushes.White,
-                    FontSize = 18,
-                    Margin = new Thickness(10, 0, 10, 0)
-                };
+                    var textBlock = new TextBlock
+                    {
+                        Text = pending.Item1,
+                        Foreground = Brushes.White,
+                        FontSize = 18,
+                        Margin = new Thickness(10, 0, 10, 0)
+                    };
 
-                var acceptButton = new Button
-                {
-                    Content = "Accept",
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#288444")),
-                    Foreground = Brushes.White,
-                    Width = 80,
-                    Margin = new Thickness(5),
-                    Tag = pending
-                }; 
-                acceptButton.Click += AcceptButton_Click;
+                    var acceptButton = new Button
+                    {
+                        Content = "Accept",
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#288444")),
+                        Foreground = Brushes.White,
+                        Width = 80,
+                        Height = 30,
+                        Margin = new Thickness(5),
+                        Tag = pending.Item1
+                    };
+                    acceptButton.Click += AcceptButton_Click;
 
-                var declineButton = new Button
-                {
-                    Content = "Decline",
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f44038")),
-                    Foreground = Brushes.White,
-                    Width = 80,
-                    Margin = new Thickness(5),
-                    Tag = pending
-                };
-                declineButton.Click += DeclineButton_Click;
+                    var declineButton = new Button
+                    {
+                        Content = "Decline",
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f44038")),
+                        Foreground = Brushes.White,
+                        Width = 80,
+                        Height = 30,
+                        Margin = new Thickness(5),
+                        Tag = pending.Item1
+                    };
+                    declineButton.Click += DeclineButton_Click;
 
-                stackPanel.Children.Add(textBlock);
-                stackPanel.Children.Add(acceptButton);
-                stackPanel.Children.Add(declineButton);
-                PendingFriendsList.Items.Add(stackPanel);
+                    var blockButton = new Button
+                    {
+                        Content = "Block",
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
+                        Foreground = Brushes.White,
+                        Width = 80,
+                        Height = 30,
+                        Margin = new Thickness(5),
+                        Tag = pending.Item1,
+                    };
+                    blockButton.Click += BlockButton_Click;
+
+                    _stackPanelPending.Children.Add(textBlock);
+                    _stackPanelPending.Children.Add(acceptButton);
+                    _stackPanelPending.Children.Add(declineButton);
+                    _stackPanelPending.Children.Add(blockButton);
+                    PendingFriendsList.Items.Add(_stackPanelPending);
+                }
             }
         }
 
@@ -118,25 +171,106 @@ namespace ClientMesseger
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            if (button is not null)
+            var username = button!.Tag as string;
+
+            var friendRequest = Client._pendingFriendRequestsList.Find(x => x.Item1 == username);
+
+            var friendId = friendRequest.Item2;
+            lock (Client.friendsLock)
             {
-                var username = button.Tag as string;
-                Client.AccessFile(Client.friendlistFile, FileModeEnum.Write, username!);
-                Client.AccessFile(Client.pendingFriendRequests, FileModeEnum.DeleteLine, username!);
-                PopulateFriendsList();
-                PopulatePendingFriendRequestsList();
+                Client._friendList.Add((username!, friendId));
             }
+            PopulateFriendsList();
+
+            lock (Client.pendingLock)
+            {
+                Client._pendingFriendRequestsList.Remove(friendRequest);
+            }
+            PopulatePendingFriendRequestsList();
+            var payload = new
+            {
+                code = 14,
+                userId = Client.Id,
+                friendId = friendRequest.Item2,
+                task = (byte)RelationshipStateEnum.Accepted,
+            };
+            var jsonString = JsonSerializer.Serialize(payload);
+            _ = Client.SendPayloadAsync(jsonString);
         }
 
         private void DeclineButton_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            if (button is not null)
+            var username = button!.Tag as string;
+            (string, int) friendRequest;
+            lock (Client.pendingLock)
             {
-                var username = button.Tag as string;
-                Client.AccessFile(Client.pendingFriendRequests, FileModeEnum.DeleteLine, username!);
-                PopulatePendingFriendRequestsList();
+                friendRequest = Client._pendingFriendRequestsList.Find(x => x.Item1 == username);
+                Client._pendingFriendRequestsList.Remove((friendRequest.Item1, friendRequest.Item2));
             }
+
+            PopulatePendingFriendRequestsList();
+            var payload = new
+            {
+                code = 14,
+                userId = Client.Id,
+                friendId = friendRequest.Item2,
+                task = (byte)RelationshipStateEnum.Decline,
+            };
+            var jsonString = JsonSerializer.Serialize(payload);
+            _ = Client.SendPayloadAsync(jsonString);
+        }
+
+        private void BlockButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var username = button!.Tag as string;
+            (string, int) friendRequest;
+            lock (Client.friendsLock)
+            {
+                friendRequest = Client._friendList.Find(x => x.Item1 == username);
+                Client._friendList.Remove((friendRequest.Item1, friendRequest.Item2));
+            }
+
+            lock (Client.pendingLock)
+            {
+                Client._pendingFriendRequestsList.Remove(friendRequest);
+            }
+
+            PopulateFriendsList();
+            PopulatePendingFriendRequestsList();
+            var payload = new
+            {
+                code = 14,
+                userId = Client.Id,
+                friendId = friendRequest.Item2,
+                task = (byte)RelationshipStateEnum.Blocked,
+            };
+            var jsonString = JsonSerializer.Serialize(payload);
+            _ = Client.SendPayloadAsync(jsonString);
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var username = button!.Tag as string;
+            (string, int) friendRequest;
+            lock (Client.friendsLock)
+            {
+                friendRequest = Client._friendList.Find(x => x.Item1 == username);
+                Client._friendList.Remove((friendRequest.Item1, friendRequest.Item2));
+            }
+
+            PopulateFriendsList();
+            var payload = new
+            {
+                code = 14,
+                userId = Client.Id,
+                friendId = friendRequest.Item2,
+                task = (byte)RelationshipStateEnum.Delete,
+            };
+            var jsonString = JsonSerializer.Serialize(payload);
+            _ = Client.SendPayloadAsync(jsonString);
         }
 
         private void ShowPendingFriendRequests(object sender, RoutedEventArgs args)
@@ -185,21 +319,50 @@ namespace ClientMesseger
         private void OnFriendAdded_Click(object sender, RoutedEventArgs args)
         {
             var usernameReceiver = friendNameTextBox.Text;
-            var usernameSender = Client._username;
+            var usernameSender = Client.Username;
             if (usernameSender == usernameReceiver)
             {
                 _ = SetAddFriendText("You can´t add urself :(", Brushes.Red);
                 return;
             }
+
+            lock (Client.pendingLock)
+            {
+                if (Client._pendingFriendRequestsList.Any(x => x.Item1 == usernameReceiver))
+                {
+                    _ = SetAddFriendText("You already have a pending request from that person", Brushes.Red);
+                    return;
+                }
+            }
+
+            lock (Client.friendsLock)
+            {
+                if (Client._friendList.Any((x) => x.Item1 == usernameReceiver))
+                {
+                    _ = SetAddFriendText("You already have that person added", Brushes.Red);
+                    return;
+                }
+            }
+
+            lock (Client.blockedLock)
+            {
+                if (Client._blockedList.Any(x => x.Item1 == usernameReceiver))
+                {
+                    _ = SetAddFriendText("You blocked or are blocked by that person", Brushes.Red);
+                    return;
+                }
+            }
+
             var result = ClientUI.CheckIfCanSendRequest(_stopwatch, 1.5f);
-            _stopwatch.Restart();
             if (result == 0 || result == -1)
             {
+                _stopwatch.Restart();
                 var payload = new
                 {
                     code = 10,
                     usernameReceiver,
-                    usernameSender
+                    usernameSender,
+                    senderId = Client.Id,
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
@@ -296,13 +459,5 @@ namespace ClientMesseger
         }
 
         #endregion
-
-        //musst überlegen ob du das drin lässt
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            //FriendsPanel.Width = ActualWidth * 0.75;
-            //AddFriendsPanel.Width = ActualWidth * 0.75;
-            //PendingFriendRequestsPanel.Width = ActualWidth * 0.75;
-        }
     }
 }
