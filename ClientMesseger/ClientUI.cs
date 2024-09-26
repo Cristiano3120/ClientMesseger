@@ -51,7 +51,7 @@ namespace ClientMesseger
                 window.DragMove();
                 return;
             }
-            DisplayError.Log("Error(ClientUI.Window_MouseLeftButtonDown()): window was null");
+            _ = DisplayError.Log("Error(ClientUI.Window_MouseLeftButtonDown()): window was null");
         }
 
         #endregion
@@ -62,7 +62,7 @@ namespace ClientMesseger
             {
                 if (item.GetType() == window)
                 {
-                    DisplayError.Log("Returning window");
+                    _ = DisplayError.Log("Returning window");
                     return item;
                 }
             }
@@ -77,7 +77,7 @@ namespace ClientMesseger
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        DisplayError.Log("Closing a window");
+                        _ = DisplayError.Log("Closing a window");
                         item.Close();
                     });
                 }
@@ -99,7 +99,7 @@ namespace ClientMesseger
                 });
                 return;
             }
-            DisplayError.Log("Error(ClientUI.ChangeWindowState(): var window was null)");
+            _ = DisplayError.Log("Error(ClientUI.ChangeWindowState(): var window was null)");
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace ClientMesseger
         /// <returns>If found the wanted obj.</returns>
         private static T? FindVisualParent<T>(DependencyObject child) where T : DependencyObject
         {
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            var parentObject = VisualTreeHelper.GetParent(child);
             while (parentObject != null)
             {
                 if (parentObject is T parent)

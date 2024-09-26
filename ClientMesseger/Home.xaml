@@ -31,15 +31,18 @@
                 <!-- Neue Spalte für den neuen Button -->
             </Grid.ColumnDefinitions>
 
-            <!-- Round Profile Picture and Clickable Text -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="10" Cursor="Hand">
-                <Ellipse Width="40" Height="40" VerticalAlignment="Center" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality">
-                    <Ellipse.Fill>
-                        <ImageBrush ImageSource="C:\Users\Crist\Pictures\Ich.png" Stretch="UniformToFill"/>
-                    </Ellipse.Fill>
-                </Ellipse>
-                <TextBlock x:Name ="UsernameText" Text="UserName" Foreground="White" VerticalAlignment="Center" FontSize="16"/>
-            </StackPanel>
+            <!--Profile Picture-->
+
+            <Ellipse Width="45" Height="45" VerticalAlignment="Center" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="HighQuality">
+                <Ellipse.Fill>
+                    <ImageBrush ImageSource="C:\Users\Crist\Pictures\Ich.png" Stretch="UniformToFill"/>
+                </Ellipse.Fill>
+            </Ellipse>
+            
+            <!--Username + clickable-->
+
+            <TextBlock x:Name ="UsernameText" Grid.Column="1" Text="UserName" Foreground="White" VerticalAlignment="Center" FontSize="16" 
+           MouseLeftButtonDown="UsernameText_MouseLeftButtonDown" Cursor="Hand"/>
 
             <!-- Pending Friend requests button -->
             <Button x:Name="showPendingFaButton" Grid.Column="2" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Pending" HorizontalAlignment="Right" Click="ShowPendingFriendRequests"/>
@@ -53,8 +56,12 @@
 
         <!-- Main Content Section -->
         <Grid Margin="0,80,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="21*"/>
+                <ColumnDefinition Width="779*"/>
+            </Grid.ColumnDefinitions>
             <!-- Panel for Friends List -->
-            <Grid x:Name="FriendsPanel" Background="#222" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600">
+            <Grid x:Name="FriendsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="FriendsPanelTranslateTransform"/>
                 </Grid.RenderTransform>
@@ -62,7 +69,7 @@
             </Grid>
 
             <!-- Panel for Pending Friend Requests -->
-            <Grid x:Name="PendingFriendRequestsPanel" Background="#222" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600">
+            <Grid x:Name="PendingFriendRequestsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="PendingFriendRequestsTranslateTransform"/>
                 </Grid.RenderTransform>
@@ -71,7 +78,7 @@
             </Grid>
 
             <!-- Panel for AddFriend List -->
-            <Grid x:Name="AddFriendsPanel" Background="#222" HorizontalAlignment="Right" VerticalAlignment="Stretch" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600">
+            <Grid x:Name="AddFriendsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="AddFriendsPanelTranslateTransform"/>
                 </Grid.RenderTransform>

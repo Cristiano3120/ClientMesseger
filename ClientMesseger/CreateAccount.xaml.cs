@@ -329,7 +329,7 @@ namespace ClientMesseger
             var status = root.GetProperty("status").GetString();
             if (status == "None")
             {
-                DisplayError.Log("Acc can be created!");
+                _ = DisplayError.Log("Acc can be created!");
                 var verificationCode = new Random().Next(100000, 999999);
                 var payload = new
                 {
@@ -348,14 +348,14 @@ namespace ClientMesseger
                 _ = Client.SendPayloadAsync(jsonString);
                 var loginWindow = _loginWindow;
                 loginWindow!.Close();
-                DisplayError.Log($"Code: {verificationCode}");
+                _ = DisplayError.Log($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
                 Close();
             }
             else
             {
-                DisplayError.Log($"The {status} is already being used. Pls enter another one!");
+                _ = DisplayError.Log($"The {status} is already being used. Pls enter another one!");
                 _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
             }
         }

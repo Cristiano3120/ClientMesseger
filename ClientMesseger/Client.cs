@@ -39,9 +39,9 @@ namespace ClientMesseger
         Connect:
             try
             {
-                DisplayError.Log("Trying to connect to server");
+                _ = DisplayError.Log("Trying to connect to server");
                 await _client.ConnectAsync(ip, port, cancellationToken);
-                DisplayError.Log("Connection to server succesful");
+                _ = DisplayError.Log("Connection to server succesful");
                 Security.Initialize();
                 _ = Task.Run(() => { _ = ListenForMessages(); });
                 var loadingWindow = ClientUI.GetWindow(typeof(MainWindow));
@@ -81,7 +81,7 @@ namespace ClientMesseger
             var fileName = "UserLoginData.txt";
             if (isoStorage.FileExists(fileName))
             {
-                DisplayError.Log("Trying to auto login");
+                _ = DisplayError.Log("Trying to auto login");
                 using var isoStream = new IsolatedStorageFileStream(fileName, FileMode.Open, isoStorage);
                 using var reader = new StreamReader(isoStream);
                 var email = reader.ReadLine();
@@ -100,7 +100,7 @@ namespace ClientMesseger
             }
             else
             {
-                DisplayError.Log("File for auto login couldnt be found.");
+                _ = DisplayError.Log("File for auto login couldnt be found.");
             }
         }
 
@@ -116,7 +116,8 @@ namespace ClientMesseger
                     Array.Copy(buffer, tempBuffer, bytesRead);
                     var root = Security.DecryptMessage(tempBuffer) ?? throw new Exception("Root was null");
                     var code = root.GetProperty("code").GetByte();
-                    DisplayError.Log($"Received code {code}");
+                    _ = DisplayError.Log($"Received code {code}");
+                    _ = DisplayError.Log($"Received: {root}");
                     switch (code)
                     {
                         case 0: //Receiving RSA key
@@ -155,7 +156,7 @@ namespace ClientMesseger
                             var result = root.GetProperty("result");
                             if (result.ValueKind == JsonValueKind.Null)
                             {
-                                DisplayError.Log("Server couldnt connect to the database.");
+                                _ = DisplayError.Log("Server couldnt connect to the database.");
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     if (ClientUI.GetWindow(typeof(Login)) is Login loginWindow)
@@ -218,7 +219,7 @@ namespace ClientMesseger
                         case 12: //Reiceving Friend request
                             var username = root.GetProperty("usernameSender").GetString();
                             var senderId = root.GetProperty("senderId").GetInt32();
-                            DisplayError.Log($"{username} added you!");
+                            _ = DisplayError.Log($"{username} added you!");
                             lock (pendingLock)
                             {
                                 _pendingFriendRequestsList.Add((username!, senderId));
@@ -281,7 +282,7 @@ namespace ClientMesseger
                     DisplayError.DisplayBasicErrorInfos(ex, "Client", "ListenForMessages()");
                 }
             }
-            DisplayError.Log("Lost connection to the Server");
+            _ = DisplayError.Log("Lost connection to the Server");
             Restart();
         }
 
@@ -300,7 +301,8 @@ namespace ClientMesseger
         {
             try
             {
-                DisplayError.Log($"Trying to send {encryption} encrypted data");
+                _ = DisplayError.Log($"Sending: {payload}");
+                _ = DisplayError.Log($"Trying to send {encryption} encrypted data");
                 var buffer = payload != null ? Encoding.UTF8.GetBytes(payload) : throw new ArgumentNullException(nameof(payload));
                 switch (encryption)
                 {
@@ -323,11 +325,11 @@ namespace ClientMesseger
             }
             catch (ArgumentNullException)
             {
-                DisplayError.Log($"Error(Client.SendPayloadAsync(): Payload was null)");
+                _ = DisplayError.Log($"Error(Client.SendPayloadAsync(): Payload was null)");
             }
             catch (Exception ex)
             {
-                DisplayError.Log($"Error(Client.SendPayloadAsync()): {ex.Message}");
+                _ = DisplayError.Log($"Error(Client.SendPayloadAsync()): {ex.Message}");
             }
         }
 

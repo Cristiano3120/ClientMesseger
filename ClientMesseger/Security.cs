@@ -55,11 +55,11 @@ namespace ClientMesseger
             aes.Key = _privateAes.Key;
             aes.IV = _privateAes.IV;
 
-            ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+            var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
 
-            using (MemoryStream msEncrypt = new MemoryStream())
+            using (var msEncrypt = new MemoryStream())
             {
-                using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                 {
                     csEncrypt.Write(data, 0, data.Length);
                     csEncrypt.FlushFinalBlock();
@@ -87,7 +87,7 @@ namespace ClientMesseger
             {
                 try
                 {
-                    string data = decryptionMode switch
+                    var data = decryptionMode switch
                     {
                         EncryptionMode.AES => DecryptDataAES(buffer),
                         EncryptionMode.None => Encoding.UTF8.GetString(buffer),
@@ -99,8 +99,8 @@ namespace ClientMesseger
                 {
                     if (decryptionMode > 0)
                     {
-                        decryptionMode = decryptionMode - 2;
-                        DisplayError.Log($"Couldnt decrypt the data." +
+                        decryptionMode -= 2;
+                        _ = DisplayError.Log($"Couldnt decrypt the data." +
                         $" Trying again with {decryptionMode} decryption");
                     }
                 }

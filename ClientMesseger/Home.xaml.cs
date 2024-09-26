@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
@@ -456,6 +457,33 @@ namespace ClientMesseger
                 };
                 translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
             }
+        }
+
+        private void UsernameText_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            //Wenn dieses Fenster maximized ist und man dann in die Settings geht klappt das von der Location her nicht
+            //deswegen dieses if
+            Settings settings;
+            if (WindowState == WindowState.Maximized)
+            {
+                settings = new Settings(this)
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    WindowState = WindowState.Maximized,
+                };
+            }
+            else
+            {
+                settings = new Settings(this)
+                {
+                    Width = Width,
+                    Height = Height,
+                    Left = Left,
+                    Top = Top,
+                };
+            }
+            settings.Show();
+            Hide();
         }
 
         #endregion

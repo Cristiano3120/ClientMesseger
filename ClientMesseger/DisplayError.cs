@@ -9,6 +9,7 @@ namespace ClientMesseger
     internal static class DisplayError
     {
         private const string _loggingFile = @"C:\Users\Crist\Desktop\ClientLog.txt";
+        private static readonly Queue<(string, string)> _loggingList = new();
 
         public static void Initialize()
         {
@@ -20,33 +21,44 @@ namespace ClientMesseger
 
         public static void DisplayBasicErrorInfos(Exception ex, string className, string methodName)
         {
-            Log($"Error({className}.{methodName}): {ex.Message}");
+            _ = Log($"Error({className}.{methodName}): {ex.Message}");
         }
 
         public static void ObjectDisposedException(ObjectDisposedException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            Log($"Error: The object {ex.ObjectName} was disposed");
+            _ = Log($"Error: The object {ex.ObjectName} was disposed");
         }
 
         public static void SocketException(SocketException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            Log($"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}");
+            _ = Log($"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}");
         }
 
         public static void ArgumentNullException(ArgumentNullException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            Log($"Error(Var that was null): {ex.ParamName}");
+            _ = Log($"Error(Var that was null): {ex.ParamName}");
         }
 
-        public static void Log(string error)
+        public static async Task Log(string log)
         {
-            Console.WriteLine(error);
-            using (var writer = new StreamWriter(_loggingFile, true))
+            try
             {
-                writer.WriteLine($"[{DateTime.UtcNow:HH:mm:ss}] {error}");
+                Console.WriteLine(log);
+                _loggingList.Enqueue((log, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
+                foreach (var (content, timestamp) in _loggingList)
+                {
+                    using (var writer = new StreamWriter(_loggingFile, true))
+                    {
+                        await writer.WriteLineAsync($"{timestamp} {content}");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                _loggingList.Enqueue((log, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
             }
         }
     }
