@@ -6,7 +6,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ClientMesseger
 {
@@ -17,13 +19,14 @@ namespace ClientMesseger
     {
         #pragma warning disable CS8618
         private static TcpClient _client;
+        public static BitmapImage ProfilPicture { get; private set; }
         public static string? Username { get; private set; }
         public static int Id { get; private set; }
         internal delegate void MessageReceivedEventHandler(JsonElement root);
         internal static event MessageReceivedEventHandler OnReceivedCode4;
-        public static readonly List<(string, int)> _friendList = new();
-        public static readonly List<(string, int)> _pendingFriendRequestsList = new();
-        public static readonly List<(string, int)> _blockedList = new();
+        public static readonly List<(string, int, string)> _friendList = new();
+        public static readonly List<(string, int, string)> _pendingFriendRequestsList = new();
+        public static readonly List<(string, int, string)> _blockedList = new();
         public static readonly object friendsLock = new();
         public static readonly object pendingLock = new();
         public static readonly object blockedLock = new();
@@ -144,7 +147,16 @@ namespace ClientMesseger
                                     var email = root.GetProperty("Email").GetString();
                                     var password = root.GetProperty("Password").GetString();
                                     var username = root.GetProperty("Username").GetString();
+                                    var profilPic = root.GetProperty("profilPic").GetString();
                                     Username = username;
+                                    ProfilPicture = GetBitmapImageFromBase64String(profilPic!)!;
+                                    if (ProfilPicture == null)
+                                    {
+                                        Application.Current.Dispatcher.Invoke(() =>
+                                        {
+                                            Application.Current.Shutdown();
+                                        });
+                                    }
                                     WriteLoginDataIntoFile(email!, password!);
                                     var home = new Home();
                                     home.Show();
@@ -174,9 +186,14 @@ namespace ClientMesseger
                                     var password = root.GetProperty("password").GetString();
                                     Username = root.GetProperty("username").GetString();
                                     Id = root.GetProperty("id").GetInt32();
-                                    if (string.IsNullOrEmpty(Username))
+                                    var ProfilPicString = root.GetProperty("profilPic").GetString();
+                                    ProfilPicture = GetBitmapImageFromBase64String(ProfilPicString!)!;
+                                    if (ProfilPicture == null || string.IsNullOrEmpty(Username))
                                     {
-                                        Application.Current.Shutdown();
+                                        Application.Current.Dispatcher.Invoke(() =>
+                                        {
+                                            Application.Current.Shutdown();
+                                        });
                                     }
 
                                     WriteLoginDataIntoFile(email!, password!);
@@ -219,10 +236,11 @@ namespace ClientMesseger
                         case 12: //Reiceving Friend request
                             var username = root.GetProperty("usernameSender").GetString();
                             var senderId = root.GetProperty("senderId").GetInt32();
+                            var profilPic = root.GetProperty("profilPic").GetString();
                             _ = DisplayError.Log($"{username} added you!");
                             lock (pendingLock)
                             {
-                                _pendingFriendRequestsList.Add((username!, senderId));
+                                _pendingFriendRequestsList.Add((username!, senderId, profilPic!));
                             }
 
                             Application.Current.Dispatcher.Invoke(() =>
@@ -243,7 +261,7 @@ namespace ClientMesseger
                                         Console.WriteLine("PENDING");
                                         lock (pendingLock)
                                         {
-                                            _pendingFriendRequestsList.Add((friend.Username, friend.FriendId));
+                                            _pendingFriendRequestsList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
                                         }
                                     }
                                     else if (friend.Status == "Accepted")
@@ -251,7 +269,7 @@ namespace ClientMesseger
                                         Console.WriteLine("FRIEND");
                                         lock (friendsLock)
                                         {
-                                            _friendList.Add((friend.Username, friend.FriendId));
+                                            _friendList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
                                         }
                                     }
                                     else if (friend.Status == "Blocked")
@@ -259,7 +277,7 @@ namespace ClientMesseger
                                         Console.WriteLine("BLOCKED");
                                         lock (blockedLock)
                                         {
-                                            _blockedList.Add((friend.Username, friend.FriendId));
+                                            _blockedList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
                                         }
                                     }
                                     else
@@ -330,6 +348,36 @@ namespace ClientMesseger
             catch (Exception ex)
             {
                 _ = DisplayError.Log($"Error(Client.SendPayloadAsync()): {ex.Message}");
+            }
+        }
+
+        public static BitmapImage? GetBitmapImageFromBase64String(string base64String)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(base64String)) return null;
+                    
+
+                var imageBytes = Convert.FromBase64String(base64String);
+
+                using (var ms = new MemoryStream(imageBytes))
+                {
+                    var bitmapImage = new BitmapImage();
+                    ms.Position = 0;
+
+                    bitmapImage.BeginInit();
+                    bitmapImage.StreamSource = ms;
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.EndInit();
+                    bitmapImage.Freeze();
+
+                    return bitmapImage;
+                }
+            }
+            catch (Exception ex)
+            {
+                DisplayError.DisplayBasicErrorInfos(ex, "Client", "GetBitmapImageFromBase64String");
+                return null;
             }
         }
 

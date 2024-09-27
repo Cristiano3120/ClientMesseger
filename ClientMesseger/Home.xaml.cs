@@ -2,9 +2,10 @@
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
 
 namespace ClientMesseger
 {
@@ -21,6 +22,7 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
+            ProfilPic.ImageSource = Client.ProfilPicture;
             UsernameText.Text = Client.Username;
             _stopwatch = new Stopwatch();
         }
@@ -51,13 +53,29 @@ namespace ClientMesseger
 
             lock (Client.friendsLock)
             {
-                foreach (var (friendUsername, friendId) in Client._friendList)
+                foreach (var (friendUsername, friendId, profilPic) in Client._friendList)
                 {
                     _stackPanelFriends = new StackPanel
                     {
                         Orientation = Orientation.Horizontal,
                         Margin = new Thickness(5)
                     };
+
+                    var ellipse = new Ellipse
+                    {
+                        Width = 45,
+                        Height = 45,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 10, 0)
+                    };
+
+                    var imageBrush = new ImageBrush()
+                    {
+                        ImageSource = Client.GetBitmapImageFromBase64String(profilPic),
+                        Stretch = Stretch.UniformToFill,
+                    };
+
+                    ellipse.Fill = imageBrush;
 
                     var textBlockUsername = new TextBlock
                     {
@@ -90,6 +108,7 @@ namespace ClientMesseger
                     };
                     blockButton.Click += BlockButton_Click;
                     deleteButton.Click += DeleteButton_Click;
+                    _stackPanelFriends.Children.Add(ellipse);
                     _stackPanelFriends.Children.Add(textBlockUsername);
                     _stackPanelFriends.Children.Add(blockButton);
                     _stackPanelFriends.Children.Add(deleteButton);
@@ -114,12 +133,27 @@ namespace ClientMesseger
                         Margin = new Thickness(5)
                     };
 
+                    var ellipse = new Ellipse
+                    {
+                        Width = 45,
+                        Height = 45,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 10, 0),
+                    };
+
+                    var imageBrush = new ImageBrush()
+                    {
+                        ImageSource = Client.GetBitmapImageFromBase64String(pending.Item3),
+                        Stretch = Stretch.UniformToFill,
+                    };
+                    ellipse.Fill = imageBrush;
+
                     var textBlock = new TextBlock
                     {
                         Text = pending.Item1,
                         Foreground = Brushes.White,
                         FontSize = 18,
-                        Margin = new Thickness(10, 0, 10, 0)
+                        Margin = new Thickness(10)
                     };
 
                     var acceptButton = new Button
@@ -157,7 +191,7 @@ namespace ClientMesseger
                         Tag = pending.Item1,
                     };
                     blockButton.Click += BlockButton_Click;
-
+                    _stackPanelPending.Children.Add(ellipse);
                     _stackPanelPending.Children.Add(textBlock);
                     _stackPanelPending.Children.Add(acceptButton);
                     _stackPanelPending.Children.Add(declineButton);
@@ -179,7 +213,7 @@ namespace ClientMesseger
             var friendId = friendRequest.Item2;
             lock (Client.friendsLock)
             {
-                Client._friendList.Add((username!, friendId));
+                Client._friendList.Add((username!, friendId, friendRequest.Item3));
             }
             PopulateFriendsList();
 
@@ -203,11 +237,11 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int) friendRequest;
+            (string, int, string) friendRequest;
             lock (Client.pendingLock)
             {
                 friendRequest = Client._pendingFriendRequestsList.Find(x => x.Item1 == username);
-                Client._pendingFriendRequestsList.Remove((friendRequest.Item1, friendRequest.Item2));
+                Client._pendingFriendRequestsList.Remove(friendRequest);
             }
 
             PopulatePendingFriendRequestsList();
@@ -226,11 +260,11 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int) friendRequest;
+            (string, int, string) friendRequest;
             lock (Client.friendsLock)
             {
                 friendRequest = Client._friendList.Find(x => x.Item1 == username);
-                Client._friendList.Remove((friendRequest.Item1, friendRequest.Item2));
+                Client._friendList.Remove(friendRequest);
             }
 
             lock (Client.pendingLock)
@@ -255,11 +289,11 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int) friendRequest;
+            (string, int, string) friendRequest;
             lock (Client.friendsLock)
             {
                 friendRequest = Client._friendList.Find(x => x.Item1 == username);
-                Client._friendList.Remove((friendRequest.Item1, friendRequest.Item2));
+                Client._friendList.Remove(friendRequest);
             }
 
             PopulateFriendsList();

@@ -35,7 +35,7 @@
 
             <Ellipse Width="45" Height="45" VerticalAlignment="Center" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="HighQuality">
                 <Ellipse.Fill>
-                    <ImageBrush ImageSource="C:\Users\Crist\Pictures\Ich.png" Stretch="UniformToFill"/>
+                    <ImageBrush x:Name="ProfilPic" Stretch="UniformToFill"/>
                 </Ellipse.Fill>
             </Ellipse>
             

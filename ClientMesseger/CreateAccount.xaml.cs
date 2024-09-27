@@ -133,28 +133,14 @@ namespace ClientMesseger
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(FirstName.Text))
+            if (string.IsNullOrWhiteSpace(FirstName.Text))
             {
-                foreach (var c in FirstName.Text)
-                {
-                    if (char.IsWhiteSpace(c))
-                    {
-                        _ = CallErrorBox("The first name can't contain any whitespaces");
-                        return false;
-                    }
-                }
+                return false;
             }
 
-            if (!string.IsNullOrWhiteSpace(LastName.Text))
+            if (string.IsNullOrWhiteSpace(LastName.Text))
             {
-                foreach (var c in LastName.Text)
-                {
-                    if (char.IsWhiteSpace(c))
-                    {
-                        _ = CallErrorBox("The last name can't contain any whitespaces");
-                        return false;
-                    }
-                }
+                return false;
             }
 
             if (!string.IsNullOrWhiteSpace(Day.Text))
