@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,6 +26,11 @@ namespace ClientMesseger
             ProfilPic.ImageSource = Client.ProfilPicture;
             UsernameText.Text = Client.Username;
             _stopwatch = new Stopwatch();
+        }
+
+        public void OnProfilPicChanged(BitmapImage image)
+        {
+            ProfilPic.ImageSource = image;
         }
 
         public async Task SetAddFriendText(string input, Brush color)

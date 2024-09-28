@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace ClientMesseger
@@ -48,10 +49,33 @@ namespace ClientMesseger
         {
             if (sender is Window window)
             {
+                if (window.WindowState == WindowState.Maximized)
+                {
+
+                    var mousePosition = Mouse.GetPosition((UIElement)sender);
+                    window.WindowState = WindowState.Normal;
+                    //Manuell getestete offsets
+                    window.Left = mousePosition.X - 400;
+                    window.Top = mousePosition.Y - 20;
+                }
                 window.DragMove();
                 return;
             }
-            _ = DisplayError.Log("Error(ClientUI.Window_MouseLeftButtonDown()): window was null");
+            else
+            {
+                window = Window.GetWindow(sender as DependencyObject);
+                if (window.WindowState == WindowState.Maximized)
+                {
+                    
+                    var mousePosition = Mouse.GetPosition((UIElement)sender);
+                    window.WindowState = WindowState.Normal;
+                    //Manuell getestete offsets
+                    window.Left = mousePosition.X - 400;
+                    window.Top = mousePosition.Y - 20;
+                }
+                window?.DragMove();
+                return;
+            }
         }
 
         #endregion

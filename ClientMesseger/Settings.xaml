@@ -3,15 +3,28 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ClientMesseger"
         mc:Ignorable="d"
         Title="Settings" Height="450" Width="800" MinHeight="450" MinWidth="800" WindowStartupLocation="Manual" Background="#1f1e1f" WindowStyle="None">
     <WindowChrome.WindowChrome>
         <WindowChrome GlassFrameThickness="0" ResizeBorderThickness="10" CornerRadius="0" CaptionHeight="0"/>
     </WindowChrome.WindowChrome>
     <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Column für Settings Auswahl -->
+            <ColumnDefinition Width="150"/>
+            <!--Column für die Settings-->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <!-- Row für Titlebar -->
+            <RowDefinition Height="30"/>
+            <!-- Row für Settings -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
         <!-- Title Bar -->
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="30" Background="#333" Name="TitleBar">
+        <Grid Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="30" Background="#333" Name="TitleBar">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="btnMinimize" Height="30" Width="30" VerticalAlignment="Center" HorizontalAlignment="Right" Background="Transparent" BorderBrush="Transparent" Content="-"  FontSize="20"/>
                 <Button x:Name="btnMaximize" Height="30" Width="30" VerticalAlignment="Center" HorizontalAlignment="Right" Background="Transparent" BorderBrush="Transparent" Content="🗖"/>
@@ -19,5 +32,29 @@
             </StackPanel>
             <Grid x:Name="DragRegion" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Grid>
+
+        <Grid Grid.Column="1" Grid.Row="1" Background="#3a3a3a">
+        </Grid>
+
+        <!-- Liste mit Texten in der linken Spalte -->
+        <ListBox Grid.Column="0" Grid.Row="1" Background="#2e2e2e" Foreground="White" BorderBrush="Transparent" Name="SettingsList" SelectionChanged="SettingsList_SelectionChanged">
+            <!-- ListBoxItems -->
+            <ListBoxItem Content="Profil" Padding="10"/>
+            <ListBoxItem Content="Language" Padding="10"/>
+            <ListBoxItem Content="Personal Information" Padding="10"/>
+        </ListBox>
+        
+        <!--Profil Panel-->
+        <StackPanel x:Name="ProfilPanel" Visibility="Visible" Grid.Column="1" Grid.Row="1">
+            <Ellipse Width="70" Height="70" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="10" MouseEnter="Ellipse_MouseEnter" MouseLeave="Ellipse_MouseLeave" MouseDown="Ellipse_MouseDown">
+                <Ellipse.Fill>
+                    <ImageBrush x:Name="ProfilPic" Stretch="UniformToFill"/>
+                </Ellipse.Fill>
+            </Ellipse>
+        </StackPanel>
+
+        <StackPanel x:Name="LanguagePanel" Visibility="Collapsed" Grid.Column="1" Grid.Row="1">
+            
+        </StackPanel>
     </Grid>
 </Window>

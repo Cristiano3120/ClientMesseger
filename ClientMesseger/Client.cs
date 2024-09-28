@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -17,7 +16,7 @@ namespace ClientMesseger
     /// </summary>
     internal static class Client
     {
-        #pragma warning disable CS8618
+#pragma warning disable CS8618
         private static TcpClient _client;
         public static BitmapImage ProfilPicture { get; private set; }
         public static string? Username { get; private set; }
@@ -30,6 +29,8 @@ namespace ClientMesseger
         public static readonly object friendsLock = new();
         public static readonly object pendingLock = new();
         public static readonly object blockedLock = new();
+        private static string[] _profilePicParts = new string[4];
+        private static int _receivedParts;
 
         public static async Task Start()
         {
@@ -186,23 +187,7 @@ namespace ClientMesseger
                                     var password = root.GetProperty("password").GetString();
                                     Username = root.GetProperty("username").GetString();
                                     Id = root.GetProperty("id").GetInt32();
-                                    var ProfilPicString = root.GetProperty("profilPic").GetString();
-                                    ProfilPicture = GetBitmapImageFromBase64String(ProfilPicString!)!;
-                                    if (ProfilPicture == null || string.IsNullOrEmpty(Username))
-                                    {
-                                        Application.Current.Dispatcher.Invoke(() =>
-                                        {
-                                            Application.Current.Shutdown();
-                                        });
-                                    }
-
                                     WriteLoginDataIntoFile(email!, password!);
-                                    Application.Current.Dispatcher.Invoke(() =>
-                                    {
-                                        var home = new Home();
-                                        home.Show();
-                                        ClientUI.CloseAllWindowsExceptOne(home);
-                                    });
                                     break;
                                 default:
                                     _ = Application.Current.Dispatcher.BeginInvoke(() =>
@@ -293,6 +278,39 @@ namespace ClientMesseger
                                 home?.PopulateFriendsList();
                             });
                             break;
+                        case 16: //Receiving profilPics (in 4 parts)
+                            var partNumber = root.GetProperty("partNumber").GetInt32();
+                            var partData = root.GetProperty("partData").GetString();
+                            if (partNumber >= 1 && partNumber <= 4)
+                            {
+                                _profilePicParts[partNumber - 1] = partData!;
+                                _receivedParts++;
+                            }
+ 
+                            if (_receivedParts == 4)
+                            {
+                                var completeBase64String = string.Join("", _profilePicParts);
+                                var imageBytes = Convert.FromBase64String(completeBase64String);
+                                var bitmap = new BitmapImage();
+                                using (var stream = new MemoryStream(imageBytes))
+                                {
+                                    bitmap.BeginInit();
+                                    bitmap.StreamSource = stream;
+                                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                    bitmap.EndInit();
+                                    bitmap.Freeze();
+                                }
+                                ProfilPicture = bitmap;
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    var home = new Home();
+                                    home = (Home)ClientUI.GetWindow(typeof(Home))!;
+                                    home.OnProfilPicChanged(ProfilPicture);
+                                    home.Show();
+                                    ClientUI.CloseAllWindowsExceptOne(home);
+                                });
+                            }
+                            break;
                     }
                 }
                 catch (Exception ex)
@@ -356,7 +374,7 @@ namespace ClientMesseger
             try
             {
                 if (string.IsNullOrEmpty(base64String)) return null;
-                    
+
 
                 var imageBytes = Convert.FromBase64String(base64String);
 
@@ -381,7 +399,13 @@ namespace ClientMesseger
             }
         }
 
+        public static void SetProfilPicture(BitmapImage image)
+        {
+            ProfilPicture = image;
+        }
+
         [DllImport("kernel32.dll")]
         private static extern bool AllocConsole();
     }
 }
+
