@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace ClientMesseger
 {
-#pragma warning disable CS8618
+    #pragma warning disable CS8618
     internal static class Security
     {
         private static RSAParameters _publicServerRSAKey;

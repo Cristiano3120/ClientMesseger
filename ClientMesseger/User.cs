@@ -13,9 +13,9 @@ namespace ClientMesseger
         public string Username { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public int Day { get; set; } = 0;
-        public int Month { get; set; } = 0;
-        public int Year { get; set; } = 0;
+        public int Day { get; set; }
+        public int Month { get; set; }
+        public int Year { get; set; }
 
         public IEnumerator<string> GetEnumerator()
         {
@@ -34,5 +34,4 @@ namespace ClientMesseger
             return GetEnumerator();
         }
     }
-
 }

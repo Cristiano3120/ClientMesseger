@@ -42,12 +42,12 @@ namespace ClientMesseger
             _ = Log($"Error(Var that was null): {ex.ParamName}");
         }
 
-        public static async Task Log(string log)
+        public static async Task Log<T>(T log) where T : IConvertible
         {
             try
             {
                 Console.WriteLine(log);
-                _loggingList.Enqueue((log, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
+                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
                 foreach (var (content, timestamp) in _loggingList)
                 {
                     using (var writer = new StreamWriter(_loggingFile, true))
@@ -58,7 +58,7 @@ namespace ClientMesseger
             }
             catch (Exception)
             {
-                _loggingList.Enqueue((log, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
+                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.UtcNow.ToString("HH:mm:ss")}]"));
             }
         }
     }

@@ -59,7 +59,7 @@ namespace ClientMesseger
 
             lock (Client.friendsLock)
             {
-                foreach (var (friendUsername, friendId, profilPic) in Client._friendList)
+                foreach (var (friendUsername, friendId, profilPic) in Client.friendList)
                 {
                     _stackPanelFriends = new StackPanel
                     {
@@ -131,7 +131,7 @@ namespace ClientMesseger
 
             lock (Client.pendingLock)
             {
-                foreach (var pending in Client._pendingFriendRequestsList)
+                foreach (var pending in Client.pendingFriendRequestsList)
                 {
                     _stackPanelPending = new StackPanel
                     {
@@ -214,18 +214,18 @@ namespace ClientMesseger
             var button = sender as Button;
             var username = button!.Tag as string;
 
-            var friendRequest = Client._pendingFriendRequestsList.Find(x => x.Item1 == username);
+            var friendRequest = Client.pendingFriendRequestsList.Find(x => x.Item1 == username);
 
             var friendId = friendRequest.Item2;
             lock (Client.friendsLock)
             {
-                Client._friendList.Add((username!, friendId, friendRequest.Item3));
+                Client.friendList.Add((username!, friendId, friendRequest.Item3));
             }
             PopulateFriendsList();
 
             lock (Client.pendingLock)
             {
-                Client._pendingFriendRequestsList.Remove(friendRequest);
+                Client.pendingFriendRequestsList.Remove(friendRequest);
             }
             PopulatePendingFriendRequestsList();
             var payload = new
@@ -246,8 +246,8 @@ namespace ClientMesseger
             (string, int, string) friendRequest;
             lock (Client.pendingLock)
             {
-                friendRequest = Client._pendingFriendRequestsList.Find(x => x.Item1 == username);
-                Client._pendingFriendRequestsList.Remove(friendRequest);
+                friendRequest = Client.pendingFriendRequestsList.Find(x => x.Item1 == username);
+                Client.pendingFriendRequestsList.Remove(friendRequest);
             }
 
             PopulatePendingFriendRequestsList();
@@ -269,13 +269,13 @@ namespace ClientMesseger
             (string, int, string) friendRequest;
             lock (Client.friendsLock)
             {
-                friendRequest = Client._friendList.Find(x => x.Item1 == username);
-                Client._friendList.Remove(friendRequest);
+                friendRequest = Client.friendList.Find(x => x.Item1 == username);
+                Client.friendList.Remove(friendRequest);
             }
 
             lock (Client.pendingLock)
             {
-                Client._pendingFriendRequestsList.Remove(friendRequest);
+                Client.pendingFriendRequestsList.Remove(friendRequest);
             }
 
             PopulateFriendsList();
@@ -298,8 +298,8 @@ namespace ClientMesseger
             (string, int, string) friendRequest;
             lock (Client.friendsLock)
             {
-                friendRequest = Client._friendList.Find(x => x.Item1 == username);
-                Client._friendList.Remove(friendRequest);
+                friendRequest = Client.friendList.Find(x => x.Item1 == username);
+                Client.friendList.Remove(friendRequest);
             }
 
             PopulateFriendsList();
@@ -369,7 +369,7 @@ namespace ClientMesseger
 
             lock (Client.pendingLock)
             {
-                if (Client._pendingFriendRequestsList.Any(x => x.Item1 == usernameReceiver))
+                if (Client.pendingFriendRequestsList.Any(x => x.Item1 == usernameReceiver))
                 {
                     _ = SetAddFriendText("You already have a pending request from that person", Brushes.Red);
                     return;
@@ -378,7 +378,7 @@ namespace ClientMesseger
 
             lock (Client.friendsLock)
             {
-                if (Client._friendList.Any((x) => x.Item1 == usernameReceiver))
+                if (Client.friendList.Any((x) => x.Item1 == usernameReceiver))
                 {
                     _ = SetAddFriendText("You already have that person added", Brushes.Red);
                     return;
@@ -387,7 +387,7 @@ namespace ClientMesseger
 
             lock (Client.blockedLock)
             {
-                if (Client._blockedList.Any(x => x.Item1 == usernameReceiver))
+                if (Client.blockedList.Any(x => x.Item1 == usernameReceiver))
                 {
                     _ = SetAddFriendText("You blocked or are blocked by that person", Brushes.Red);
                     return;
