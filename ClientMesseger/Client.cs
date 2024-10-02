@@ -56,7 +56,7 @@ namespace ClientMesseger
                     login.Show();
                     loadingWindow.Close();
                 });
-                TryToAutoLogin();
+                //TryToAutoLogin();
             }
             catch (SocketException ex)
             {
@@ -299,6 +299,9 @@ namespace ClientMesseger
                                 home?.PopulatePendingFriendRequestsList();
                                 home?.PopulateFriendsList();
                             });
+                            break;
+                        case 16: //Server is ready to receive messages
+                            TryToAutoLogin();
                             break;
                     }
                 }

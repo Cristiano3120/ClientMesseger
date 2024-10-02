@@ -83,7 +83,6 @@ namespace ClientMesseger
             {
                 if (item.GetType() == window)
                 {
-                    _ = DisplayError.Log("Returning window");
                     return item;
                 }
             }

@@ -99,7 +99,6 @@ namespace ClientMesseger
                 }
 
                 var base64Image = ConvertToBase64(finalBitmap);
-
                 var payload = new
                 {
                     code = 15,
