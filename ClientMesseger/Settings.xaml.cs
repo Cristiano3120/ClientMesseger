@@ -99,27 +99,15 @@ namespace ClientMesseger
                 }
 
                 var base64Image = ConvertToBase64(finalBitmap);
-                // Pack picture into 4 Parts 
-                var totalLength = base64Image.Length;
-                var partSize = totalLength / 4;
-                var remainder = totalLength % 4;
 
-                for (var i = 0; i < 4; i++)
+                var payload = new
                 {
-                    // Calculate the current part size
-                    var currentPartSize = partSize + (i < remainder ? 1 : 0);
-                    var part = base64Image.Substring(i * partSize + Math.Min(i, remainder), currentPartSize);
+                    code = 15,
+                    base64Image,
+                };
+                var jsonString = JsonSerializer.Serialize(payload);
+                _ = Client.SendPayloadAsync(jsonString);
 
-                    var payload = new
-                    {
-                        code = 15,
-                        id = Client.Id,
-                        partNumber = i + 1,
-                        imagePart = part
-                    };
-                    var jsonString = JsonSerializer.Serialize(payload);
-                    _ = Client.SendPayloadAsync(jsonString);
-                }
                 Client.SetProfilPicture(finalBitmap);
                 _homeWindow.OnProfilPicChanged(finalBitmap);
                 ProfilPic.ImageSource = finalBitmap;

@@ -13,32 +13,29 @@ namespace ClientMesseger
         public static void BtnMinimize_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            Window? window = FindVisualParent<Window>(button!);
+            var window = FindVisualParent<Window>(button!);
             ChangeWindowState(window, WindowState.Minimized);
         }
 
         public static void BtnMaximize_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            Window? window = FindVisualParent<Window>(button!);
+            var window = FindVisualParent<Window>(button!);
             ChangeWindowState(window, WindowState.Maximized);
         }
 
         public static void BtnCloseShutdown_Click(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
-            Window? window = FindVisualParent<Window>(button!);
             Application.Current.Shutdown();
         }
 
         public static void BtnCloseCurrentWindow(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            Window? window = FindVisualParent<Window>(button!);
+            var window = FindVisualParent<Window>(button!);
             Application.Current.Dispatcher.Invoke(() =>
             {
                 window?.Close();
-                return;
             });
         }
 
@@ -54,7 +51,7 @@ namespace ClientMesseger
 
                     var mousePosition = Mouse.GetPosition((UIElement)sender);
                     window.WindowState = WindowState.Normal;
-                    //Manuell getestete offsets
+                    //Custom testet offsets
                     window.Left = mousePosition.X - 400;
                     window.Top = mousePosition.Y - 20;
                 }

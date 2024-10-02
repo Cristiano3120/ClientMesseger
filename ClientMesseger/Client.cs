@@ -16,7 +16,7 @@ namespace ClientMesseger
     /// </summary>
     internal static class Client
     {
-#pragma warning disable CS8618
+        #pragma warning disable CS8618
         private static TcpClient _client;
         public static BitmapImage ProfilPicture { get; private set; }
         public static string? Username { get; private set; }
@@ -110,7 +110,7 @@ namespace ClientMesseger
 
         private static async Task ListenForMessages()
         {
-            var buffer = new byte[8092];
+            var buffer = new byte[32768];
             while (_client.Connected)
             {
                 try
@@ -187,6 +187,28 @@ namespace ClientMesseger
                                     var password = root.GetProperty("password").GetString();
                                     Username = root.GetProperty("username").GetString();
                                     Id = root.GetProperty("id").GetInt32();
+                                    var imageBytes = root.GetProperty("profilPic").GetBytesFromBase64();
+
+                                    var bitmap = new BitmapImage();
+                                    using (var stream = new MemoryStream(imageBytes))
+                                    {
+                                        bitmap.BeginInit();
+                                        bitmap.StreamSource = stream;
+                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                        bitmap.EndInit();
+                                        bitmap.Freeze();
+                                    }
+                                    ProfilPicture = bitmap;
+
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        var home = new Home();
+                                        home = (Home)ClientUI.GetWindow(typeof(Home))!;
+                                        home.OnProfilPicChanged(ProfilPicture);
+                                        home.Show();
+                                        ClientUI.CloseAllWindowsExceptOne(home);
+                                    });
+
                                     WriteLoginDataIntoFile(email!, password!);
                                     break;
                                 default:
@@ -278,39 +300,6 @@ namespace ClientMesseger
                                 home?.PopulateFriendsList();
                             });
                             break;
-                        case 16: //Receiving profilPics (in 4 parts)
-                            var partNumber = root.GetProperty("partNumber").GetInt32();
-                            var partData = root.GetProperty("partData").GetString();
-                            if (partNumber >= 1 && partNumber <= 4)
-                            {
-                                _profilePicParts[partNumber - 1] = partData!;
-                                _receivedParts++;
-                            }
- 
-                            if (_receivedParts == 4)
-                            {
-                                var completeBase64String = string.Join("", _profilePicParts);
-                                var imageBytes = Convert.FromBase64String(completeBase64String);
-                                var bitmap = new BitmapImage();
-                                using (var stream = new MemoryStream(imageBytes))
-                                {
-                                    bitmap.BeginInit();
-                                    bitmap.StreamSource = stream;
-                                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                    bitmap.EndInit();
-                                    bitmap.Freeze();
-                                }
-                                ProfilPicture = bitmap;
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    var home = new Home();
-                                    home = (Home)ClientUI.GetWindow(typeof(Home))!;
-                                    home.OnProfilPicChanged(ProfilPicture);
-                                    home.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(home);
-                                });
-                            }
-                            break;
                     }
                 }
                 catch (Exception ex)
@@ -374,8 +363,6 @@ namespace ClientMesseger
             try
             {
                 if (string.IsNullOrEmpty(base64String)) return null;
-
-
                 var imageBytes = Convert.FromBase64String(base64String);
 
                 using (var ms = new MemoryStream(imageBytes))
