@@ -50,7 +50,6 @@ namespace ClientMesseger
             friendNameTextBlock.Text = "Enter a Username";
         }
 
-        // Freundesliste befüllen
         public void PopulateFriendsList()
         {
             FriendsList.Items.Clear();
@@ -122,7 +121,6 @@ namespace ClientMesseger
             }
         }
 
-        //Ausstehende anfragens liste befüllen
         public void PopulatePendingFriendRequestsList()
         {
             PendingFriendsList.Items.Clear();

@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ClientMesseger
@@ -18,9 +17,9 @@ namespace ClientMesseger
     {
 #pragma warning disable CS8618
         private static TcpClient _client;
-        public static BitmapImage ProfilPicture { get; private set; }
-        public static string? Username { get; private set; }
-        public static int Id { get; private set; }
+        public static BitmapImage ProfilPicture { get; set; }
+        public static string? Username { get; set; }
+        public static int Id { get; set; }
         public static readonly List<(string, int, string)> friendList = new();
         public static readonly List<(string, int, string)> pendingFriendRequestsList = new();
         public static readonly List<(string, int, string)> blockedList = new();
@@ -85,7 +84,8 @@ namespace ClientMesseger
                 using var reader = new StreamReader(isoStream);
                 var email = reader.ReadLine();
                 var password = reader.ReadLine();
-                if (email != null && password != null)
+
+                if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(password))
                 {
                     var payload = new
                     {
@@ -117,6 +117,7 @@ namespace ClientMesseger
                     var code = root.GetProperty("code").GetByte();
                     _ = DisplayError.Log($"Received code {code}");
                     _ = DisplayError.Log($"Received: {root}");
+
                     switch (code)
                     {
                         case 0: //Receiving RSA key
@@ -125,225 +126,30 @@ namespace ClientMesseger
                         case 4: //Response trying to make an acc
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                //OnReceivedCode4?.Invoke(root);
                                 var createAcc = ClientUI.GetWindow<CreateAccount>();
                                 createAcc?.ResponseCode4(root);
                             });
                             break;
                         case 7: //Feedback Creating acc
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var result = root.GetProperty("result").GetBoolean();
-                                if (result == false)
-                                {
-                                    var createAccWindow = new CreateAccount("Something went wrong while trying to create an Account. Try again!");
-                                    createAccWindow.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(createAccWindow);
-                                }
-                                else
-                                {
-                                    var email = root.GetProperty("Email").GetString();
-                                    var password = root.GetProperty("Password").GetString();
-                                    var username = root.GetProperty(nameof(Username)).GetString();
-                                    var profilPic = root.GetProperty("profilPic").GetString();
-                                    Username = username;
-                                    ProfilPicture = GetBitmapImageFromBase64String(profilPic!)!;
-                                    if (ProfilPicture == null)
-                                    {
-                                        Application.Current.Dispatcher.Invoke(() =>
-                                        {
-                                            Application.Current.Shutdown();
-                                        });
-                                    }
-                                    WriteLoginDataIntoFile(email!, password!);
-                                    var home = new Home();
-                                    home.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(home);
-                                }
-                            });
+                            HandleServerMessages.FeedbackAccountCreation(root);
                             break;
                         case 9: //Reiceving answer to the login request
-                            var result = root.GetProperty("result");
-                            if (result.ValueKind == JsonValueKind.Null)
-                            {
-                                _ = DisplayError.Log("Server couldnt connect to the database.");
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    var login = ClientUI.GetWindow<Login>();
-                                    login?.CallErrorBox("The request can´t be send right now. Try again later.");
-                                });
-                                break;
-                            }
-                            var canLogin = root.GetProperty("result").GetBoolean();
-                            if (canLogin)
-                            {
-                                var email = root.GetProperty("email").GetString();
-                                var password = root.GetProperty("password").GetString();
-                                Username = root.GetProperty("username").GetString();
-                                Id = root.GetProperty("id").GetInt32();
-                                var imageBytes = root.GetProperty("profilPic").GetBytesFromBase64();
-
-                                var bitmap = new BitmapImage();
-                                using (var stream = new MemoryStream(imageBytes))
-                                {
-                                    bitmap.BeginInit();
-                                    bitmap.StreamSource = stream;
-                                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                    bitmap.EndInit();
-                                    bitmap.Freeze();
-                                }
-                                ProfilPicture = bitmap;
-
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    var home = new Home();
-                                    home = ClientUI.GetWindow<Home>()!;
-                                    home.OnProfilPicChanged(ProfilPicture);
-                                    home.Show();
-                                    ClientUI.CloseAllWindowsExceptOne(home);
-                                });
-
-                                WriteLoginDataIntoFile(email!, password!);
-                            }
-                            else
-                            {
-                                _ = Application.Current.Dispatcher.BeginInvoke(() =>
-                                {
-                                    var login = ClientUI.GetWindow<Login>();
-                                    var error = canLogin == false ? "Email or password was wrong" : "An error accoured while processing ur request. Try again!";
-                                    _ = login!.CallErrorBox(error);
-                                });
-                            }
+                            HandleServerMessages.FeedbackLogin(root);
                             break;
                         case 11: //Answer to the sent friendRequest
-                            result = root.GetProperty("result");
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var home = ClientUI.GetWindow<Home>();
-                                if (result.ValueKind == JsonValueKind.Null)
-                                {
-                                    _ = home!.SetAddFriendText("Something went wrong! Try again later.", Brushes.White);
-                                }
-                                else if (result.GetBoolean() == false)
-                                {
-                                    _ = home!.SetAddFriendText("The enterd user couldn´t be found!", Brushes.Red);
-                                }
-                                else
-                                {
-                                    _ = home!.SetAddFriendText("Sent a friend request!", Brushes.Green);
-                                }
-                            });
+                            HandleServerMessages.FeedbackSentFriendrequest(root);
                             break;
                         case 12: //Reiceving Friend request
-                            var username = root.GetProperty("usernameSender").GetString();
-                            var senderId = root.GetProperty("senderId").GetInt32();
-                            var profilPic = root.GetProperty("profilPic").GetString();
-                            _ = DisplayError.Log($"{username} added you!");
-                            lock (pendingLock)
-                            {
-                                pendingFriendRequestsList.Add((username!, senderId, profilPic!));
-                            }
-
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var home = ClientUI.GetWindow<Home>();
-                                home?.PopulatePendingFriendRequestsList();
-                            });
+                            HandleServerMessages.ReceiveFriendrequest(root);
                             break;
                         case 13: //Getting friends and pending requests
-                            Console.WriteLine(root.ToString());
-                            if (root.TryGetProperty("friends", out var friendsElement) && friendsElement.ValueKind == JsonValueKind.Array)
-                            {
-                                var friendsList = JsonSerializer.Deserialize<List<Friend>>(friendsElement.GetRawText());
-                                foreach (var friend in friendsList!)
-                                {
-                                    if (friend.Status == RelationshipStateEnum.Pending)
-                                    {
-                                        _ = DisplayError.Log(RelationshipStateEnum.Pending);
-                                        lock (pendingLock)
-                                        {
-                                            pendingFriendRequestsList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                                        }
-                                    }
-                                    else if (friend.Status == RelationshipStateEnum.Accepted)
-                                    {
-                                        _ = DisplayError.Log(RelationshipStateEnum.Accepted);
-                                        lock (friendsLock)
-                                        {
-                                            friendList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                                        }
-                                    }
-                                    else if (friend.Status == RelationshipStateEnum.Blocked)
-                                    {
-                                        _ = DisplayError.Log("BLOCKED");
-                                        lock (blockedLock)
-                                        {
-                                            blockedList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                                        }
-                                    }
-                                    else
-                                    {
-                                        _ = DisplayError.Log("An unknown friendship status was received");
-                                    }
-                                }
-                            }
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var home = ClientUI.GetWindow<Home>();
-                                home?.PopulatePendingFriendRequestsList();
-                                home?.PopulateFriendsList();
-                            });
+                            HandleServerMessages.ReceiveRelationshipStates(root);
                             break;
                         case 16: //Server is ready to receive messages
-                            //TryToAutoLogin();
+                            TryToAutoLogin();
                             break;
-                        case 17:
-                            var sendingUsername = root.GetProperty("username").GetString();
-                            var sendingId = root.GetProperty("userId").GetInt32();
-                            var sendingProfilPic = root.GetProperty("profilPic").GetString();
-                            var task = (RelationshipStateEnum)root.GetProperty("taskByte").GetByte();
-                            if (task == RelationshipStateEnum.Blocked)
-                            {
-                                lock (friendsLock)
-                                {
-                                    friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                                lock (blockedLock)
-                                {
-                                    blockedList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                            }
-                            else if (task == RelationshipStateEnum.Accepted)
-                            {
-                                lock (pendingLock)
-                                {
-                                    pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                                lock (friendsLock)
-                                {
-                                    friendList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                            }
-                            else if (task == RelationshipStateEnum.Decline)
-                            {
-                                lock (pendingLock)
-                                {
-                                    pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                            }
-                            else if (task == RelationshipStateEnum.Delete)
-                            {
-                                lock (friendsLock)
-                                {
-                                    friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                                }
-                            }
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                var home = ClientUI.GetWindow<Home>();
-                                home?.PopulateFriendsList();
-                                home?.PopulatePendingFriendRequestsList();
-                            });
+                        case 17: //Updating a relationship(blocked, deleted etc..)
+                            HandleServerMessages.UpdateRelationship(root);
                             break;
                     }
                 }
@@ -354,17 +160,6 @@ namespace ClientMesseger
             }
             _ = DisplayError.Log("Lost connection to the Server");
             Restart();
-        }
-
-        private static void WriteLoginDataIntoFile(string email, string password)
-        {
-            using (var isoStorage = IsolatedStorageFile.GetUserStoreForAssembly())
-            using (var isoStream = new IsolatedStorageFileStream("UserLoginData.txt", FileMode.OpenOrCreate, isoStorage))
-            using (var writer = new StreamWriter(isoStream))
-            {
-                writer.WriteLine(email);
-                writer.WriteLine(password);
-            }
         }
 
         public static async Task SendPayloadAsync(string payload, EncryptionMode encryption = EncryptionMode.AES)
@@ -429,11 +224,6 @@ namespace ClientMesseger
                 DisplayError.DisplayBasicErrorInfos(ex, "Client", "GetBitmapImageFromBase64String");
                 return null;
             }
-        }
-
-        public static void SetProfilPicture(BitmapImage image)
-        {
-            ProfilPicture = image;
         }
 
         [DllImport("kernel32.dll")]

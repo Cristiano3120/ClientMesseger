@@ -72,8 +72,10 @@ namespace ClientMesseger
         private void Ellipse_MouseDown(object sender, MouseButtonEventArgs e)
         {
             // Open the file explorer
-            var openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg";
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg"
+            };
 
             if (openFileDialog.ShowDialog() == true)
             {
@@ -102,12 +104,13 @@ namespace ClientMesseger
                 var payload = new
                 {
                     code = 15,
+                    id = Client.Id,
                     base64Image,
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
 
-                Client.SetProfilPicture(finalBitmap);
+                Client.ProfilPicture = finalBitmap;
                 _homeWindow.OnProfilPicChanged(finalBitmap);
                 ProfilPic.ImageSource = finalBitmap;
             }
