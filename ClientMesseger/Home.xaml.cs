@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -228,11 +227,14 @@ namespace ClientMesseger
                 Client.pendingFriendRequestsList.Remove(friendRequest);
             }
             PopulatePendingFriendRequestsList();
+
             var payload = new
             {
                 code = 14,
+                username = Client.Username,
                 userId = Client.Id,
                 friendId = friendRequest.Item2,
+                friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Accepted,
             };
             var jsonString = JsonSerializer.Serialize(payload);
@@ -254,8 +256,10 @@ namespace ClientMesseger
             var payload = new
             {
                 code = 14,
+                username = Client.Username,
                 userId = Client.Id,
                 friendId = friendRequest.Item2,
+                friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Decline,
             };
             var jsonString = JsonSerializer.Serialize(payload);
@@ -283,8 +287,10 @@ namespace ClientMesseger
             var payload = new
             {
                 code = 14,
+                username = Client.Username,
                 userId = Client.Id,
                 friendId = friendRequest.Item2,
+                friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Blocked,
             };
             var jsonString = JsonSerializer.Serialize(payload);
@@ -306,8 +312,10 @@ namespace ClientMesseger
             var payload = new
             {
                 code = 14,
+                username = Client.Username,
                 userId = Client.Id,
                 friendId = friendRequest.Item2,
+                friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Delete,
             };
             var jsonString = JsonSerializer.Serialize(payload);

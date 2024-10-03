@@ -45,13 +45,13 @@ namespace ClientMesseger
                 _ = DisplayError.Log("Connection to server succesful");
                 Security.Initialize();
                 _ = Task.Run(() => { _ = ListenForMessages(); });
-                var loadingWindow = ClientUI.GetWindow(typeof(MainWindow));
+                var loadingWindow = ClientUI.GetWindow<MainWindow>();
                 if (loadingWindow == null) return;
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     var login = new Login();
                     login.Show();
-                    loadingWindow.Close();
+                    loadingWindow?.Close();
                 });
             }
             catch (SocketException ex)
@@ -168,10 +168,8 @@ namespace ClientMesseger
                                 _ = DisplayError.Log("Server couldnt connect to the database.");
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    if (ClientUI.GetWindow(typeof(Login)) is Login loginWindow)
-                                    {
-                                        _ = loginWindow.CallErrorBox("The request can´t be send right now. Try again later.");
-                                    }
+                                    var login = ClientUI.GetWindow<Login>();
+                                    login?.CallErrorBox("The request can´t be send right now. Try again later.");
                                 });
                                 break;
                             }
@@ -198,7 +196,7 @@ namespace ClientMesseger
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     var home = new Home();
-                                    home = (Home)ClientUI.GetWindow(typeof(Home))!;
+                                    home = ClientUI.GetWindow<Home>()!;
                                     home.OnProfilPicChanged(ProfilPicture);
                                     home.Show();
                                     ClientUI.CloseAllWindowsExceptOne(home);
@@ -210,7 +208,7 @@ namespace ClientMesseger
                             {
                                 _ = Application.Current.Dispatcher.BeginInvoke(() =>
                                 {
-                                    var login = ClientUI.GetWindow(typeof(Login)) as Login;
+                                    var login = ClientUI.GetWindow<Login>();
                                     var error = canLogin == false ? "Email or password was wrong" : "An error accoured while processing ur request. Try again!";
                                     _ = login!.CallErrorBox(error);
                                 });
@@ -220,7 +218,7 @@ namespace ClientMesseger
                             result = root.GetProperty("result");
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                var home = ClientUI.GetWindow(typeof(Home)) as Home;
+                                var home = ClientUI.GetWindow<Home>();
                                 if (result.ValueKind == JsonValueKind.Null)
                                 {
                                     _ = home!.SetAddFriendText("Something went wrong! Try again later.", Brushes.White);
@@ -247,7 +245,7 @@ namespace ClientMesseger
 
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                var home = ClientUI.GetWindow(typeof(Home)) as Home;
+                                var home = ClientUI.GetWindow<Home>();
                                 home?.PopulatePendingFriendRequestsList();
                             });
                             break;
@@ -290,13 +288,61 @@ namespace ClientMesseger
                             }
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                var home = ClientUI.GetWindow(typeof(Home)) as Home;
+                                var home = ClientUI.GetWindow<Home>();
                                 home?.PopulatePendingFriendRequestsList();
                                 home?.PopulateFriendsList();
                             });
                             break;
                         case 16: //Server is ready to receive messages
                             TryToAutoLogin();
+                            break;
+                        case 17:
+                            var sendingUsername = root.GetProperty("username").GetString();
+                            var sendingId = root.GetProperty("userId").GetInt32();
+                            var sendingProfilPic = root.GetProperty("profilPic").GetString();
+                            var task = (RelationshipStateEnum)root.GetProperty("taskByte").GetByte();
+                            if (task == RelationshipStateEnum.Blocked)
+                            {
+                                lock (friendsLock)
+                                {
+                                    friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                                lock (blockedLock)
+                                {
+                                    blockedList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                            }
+                            else if (task == RelationshipStateEnum.Accepted)
+                            {
+                                lock (pendingLock)
+                                {
+                                    pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                                lock (friendsLock)
+                                {
+                                    friendList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                            }
+                            else if (task == RelationshipStateEnum.Decline)
+                            {
+                                lock (pendingLock)
+                                {
+                                    pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                            }
+                            else if (task == RelationshipStateEnum.Delete)
+                            {
+                                lock (friendsLock)
+                                {
+                                    friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
+                                }
+                            }
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                var home = ClientUI.GetWindow<Home>();
+                                home?.PopulateFriendsList();
+                                home?.PopulatePendingFriendRequestsList();
+                            });
                             break;
                     }
                 }

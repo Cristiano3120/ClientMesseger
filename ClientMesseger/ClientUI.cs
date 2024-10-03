@@ -77,13 +77,13 @@ namespace ClientMesseger
 
         #endregion
 
-        public static Window? GetWindow(Type window)
+        public static T? GetWindow<T>() where T : Window
         {
             foreach (Window item in Application.Current.Windows)
             {
-                if (item.GetType() == window)
+                if (item is T typedWindow)
                 {
-                    return item;
+                    return typedWindow;
                 }
             }
             return null;
