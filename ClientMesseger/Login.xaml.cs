@@ -48,11 +48,12 @@ namespace ClientMesseger
             _ = Client.SendPayloadAsync(jsonString);
         }
 
-        public void CreateAccHyperlink_Click(object sender, RoutedEventArgs args)
+        public async void CreateAccHyperlink_Click(object sender, RoutedEventArgs args)
         {
-            var createAccWindow = new CreateAccount(this);
+            var createAccWindow = new CreateAccount();
             createAccWindow.Show();
-            Hide();
+            await Task.Delay(300);
+            Close();
         }
 
         #endregion

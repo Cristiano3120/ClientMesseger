@@ -13,7 +13,6 @@ namespace ClientMesseger
     public sealed partial class CreateAccount : Window
     {
 #pragma warning disable CS8618
-        private readonly Window _loginWindow;
         private readonly Stopwatch _stopwatch;
         private User _user;
 
@@ -31,8 +30,6 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
-            Client.OnReceivedCode4 += ResponseCode4;
-            _loginWindow = new Login();
             _ = CallErrorBox(error);
         }
 
@@ -41,7 +38,7 @@ namespace ClientMesseger
         /// Gets called from Login.xaml.cs.
         /// </summary>
         /// <param name="window">The login screen gets saved so it can be opend or closed later.</param>
-        public CreateAccount(Window window)
+        public CreateAccount()
         {
             InitializeComponent();
             _stopwatch = new Stopwatch();
@@ -49,8 +46,6 @@ namespace ClientMesseger
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             MouseLeftButtonDown += ClientUI.Window_MouseLeftButtonDown;
-            Client.OnReceivedCode4 += ResponseCode4;
-            _loginWindow = window;
         }
 
         #endregion
@@ -101,17 +96,11 @@ namespace ClientMesseger
         /// <summary>
         /// When pressed it opens up a Login window and closes this.
         /// </summary>
-        private void GoBackButton_Click(object sender, RoutedEventArgs e)
+        private async void GoBackButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_loginWindow == null)
-            {
-                var loginWindow = new Login();
-                loginWindow.Show();
-            }
-            else
-            {
-                _loginWindow.Show();
-            }
+            var loginWindow = new Login();
+            loginWindow.Show();
+            await Task.Delay(300);
             Close();
         }
 
@@ -133,15 +122,9 @@ namespace ClientMesseger
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(FirstName.Text))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(FirstName.Text)) return false;
 
-            if (string.IsNullOrWhiteSpace(LastName.Text))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(LastName.Text)) return false;
 
             if (!string.IsNullOrWhiteSpace(Day.Text))
             {
@@ -295,10 +278,10 @@ namespace ClientMesseger
         /// </summary>
         /// <param name="textBox">The textbox that needs to be updated.</param>
         /// <param name="charCountBlock">The textblock to dislpay how many chars can still be enterd.</param>
-        private void UpdateCharCount(TextBox textBox, TextBlock charCountBlock)
+        private static void UpdateCharCount(TextBox textBox, TextBlock charCountBlock)
         {
-            int maxLength = textBox.MaxLength;
-            int remainingChars = maxLength - textBox.Text.Length;
+            var maxLength = textBox.MaxLength;
+            var remainingChars = maxLength - textBox.Text.Length;
             charCountBlock.Text = $"{remainingChars} chars remaining";
         }
 
@@ -310,7 +293,7 @@ namespace ClientMesseger
         /// If not an error message will be shown.
         /// </summary>
         /// <param name="root">The data as Json</param>
-        public void ResponseCode4(JsonElement root)
+        public async void ResponseCode4(JsonElement root)
         {
             var status = root.GetProperty("status").GetString();
             if (status == "None")
@@ -332,17 +315,24 @@ namespace ClientMesseger
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
-                var loginWindow = _loginWindow;
-                loginWindow!.Close();
                 _ = DisplayError.Log($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
-                Close();
+                await Task.Delay(300);
+                Hide();
             }
             else
             {
-                _ = DisplayError.Log($"The {status} is already being used. Pls enter another one!");
-                _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
+                if (string.IsNullOrEmpty(status))
+                {
+                    _ = DisplayError.Log("The Server doesn´t answer right now. Try again later!");
+                    _ = CallErrorBox("The Server doesn´t answer right now. Try again later!");
+                }
+                else
+                {
+                    _ = DisplayError.Log($"The {status} is already being used. Pls enter another one!");
+                    _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
+                }
             }
         }
 

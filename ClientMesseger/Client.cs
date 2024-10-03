@@ -21,7 +21,6 @@ namespace ClientMesseger
         public static BitmapImage ProfilPicture { get; private set; }
         public static string? Username { get; private set; }
         public static int Id { get; private set; }
-        internal static event Action<JsonElement> OnReceivedCode4;
         public static readonly List<(string, int, string)> friendList = new();
         public static readonly List<(string, int, string)> pendingFriendRequestsList = new();
         public static readonly List<(string, int, string)> blockedList = new();
@@ -126,7 +125,9 @@ namespace ClientMesseger
                         case 4: //Response trying to make an acc
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                OnReceivedCode4?.Invoke(root);
+                                //OnReceivedCode4?.Invoke(root);
+                                var createAcc = ClientUI.GetWindow<CreateAccount>();
+                                createAcc?.ResponseCode4(root);
                             });
                             break;
                         case 7: //Feedback Creating acc
@@ -294,7 +295,7 @@ namespace ClientMesseger
                             });
                             break;
                         case 16: //Server is ready to receive messages
-                            TryToAutoLogin();
+                            //TryToAutoLogin();
                             break;
                         case 17:
                             var sendingUsername = root.GetProperty("username").GetString();

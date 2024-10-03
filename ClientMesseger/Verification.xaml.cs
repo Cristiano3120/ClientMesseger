@@ -40,9 +40,10 @@ namespace ClientMesseger
         /// The click logic for the hyperlink.
         /// It closes this window and opens up an Create account window.
         /// </summary>
-        private void Hyperlink_Click(object sender, RoutedEventArgs e)
+        private async void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
             _window.Show();
+            await Task.Delay(3000);
             Close();
         }
 
