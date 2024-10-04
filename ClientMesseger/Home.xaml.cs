@@ -391,6 +391,7 @@ namespace ClientMesseger
                         _ = SetAddFriendText("You already have a pending request from that person", Brushes.Red);
                         break;
                 }
+                return;
             }
 
             var result = ClientUI.CheckIfCanSendRequest(_stopwatch, 1.5f);
