@@ -21,28 +21,28 @@ namespace ClientMesseger
 
         public static void DisplayBasicErrorInfos(Exception ex, string className, string methodName)
         {
-            _ = Log($"Error({className}.{methodName}): {ex.Message}");
+            _ = LogAsync($"Error({className}.{methodName}): {ex.Message}");
         }
 
         public static void ObjectDisposedException(ObjectDisposedException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            _ = Log($"Error: The object {ex.ObjectName} was disposed");
+            _ = LogAsync($"Error: The object {ex.ObjectName} was disposed");
         }
 
         public static void SocketException(SocketException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            _ = Log($"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}");
+            _ = LogAsync($"Error(ErrorCode, SocketErrorCode): {ex.ErrorCode}, {ex.SocketErrorCode}");
         }
 
         public static void ArgumentNullException(ArgumentNullException ex, string className, string methodName)
         {
             DisplayBasicErrorInfos(ex, className, methodName);
-            _ = Log($"Error(Var that was null): {ex.ParamName}");
+            _ = LogAsync($"Error(Var that was null): {ex.ParamName}");
         }
 
-        public static async Task Log<T>(T log) where T : IConvertible
+        public static async Task LogAsync<T>(T log) where T : IConvertible
         {
             try
             {

@@ -100,7 +100,7 @@ namespace ClientMesseger
                     if (decryptionMode > 0)
                     {
                         decryptionMode -= 2;
-                        _ = DisplayError.Log($"Couldnt decrypt the data." +
+                        _ = DisplayError.LogAsync($"Couldnt decrypt the data." +
                         $" Trying again with {decryptionMode} decryption");
                     }
                 }

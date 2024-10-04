@@ -3,7 +3,7 @@
 namespace ClientMesseger
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// Interaction Logic for App.xaml
     /// </summary>
     public partial class App : Application
     {

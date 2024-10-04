@@ -55,152 +55,159 @@ namespace ClientMesseger
             FriendsList.Items.Clear();
             _stackPanelFriends?.Children.Clear();
 
-            lock (Client.friendsLock)
+            List<Friend> friendsList;
+            lock (Client.relationshipStateLock)
             {
-                foreach (var (friendUsername, friendId, profilPic) in Client.friendList)
-                {
-                    _stackPanelFriends = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Margin = new Thickness(5)
-                    };
-
-                    var ellipse = new Ellipse
-                    {
-                        Width = 45,
-                        Height = 45,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 10, 0)
-                    };
-
-                    var imageBrush = new ImageBrush()
-                    {
-                        ImageSource = Client.GetBitmapImageFromBase64String(profilPic),
-                        Stretch = Stretch.UniformToFill,
-                    };
-
-                    ellipse.Fill = imageBrush;
-
-                    var textBlockUsername = new TextBlock
-                    {
-                        Text = friendUsername,
-                        Foreground = Brushes.White,
-                        FontSize = 18,
-                        Margin = new Thickness(10)
-                    };
-
-                    var blockButton = new Button
-                    {
-                        Content = "Block",
-                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
-                        Foreground = Brushes.White,
-                        Width = 80,
-                        Height = 30,
-                        Margin = new Thickness(5),
-                        Tag = friendUsername,
-                    };
-
-                    var deleteButton = new Button
-                    {
-                        Content = "Delete",
-                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e0343c")),
-                        Foreground = Brushes.White,
-                        Width = 80,
-                        Height = 30,
-                        Margin = new Thickness(5),
-                        Tag = friendUsername,
-                    };
-                    blockButton.Click += BlockButton_Click;
-                    deleteButton.Click += DeleteButton_Click;
-                    _stackPanelFriends.Children.Add(ellipse);
-                    _stackPanelFriends.Children.Add(textBlockUsername);
-                    _stackPanelFriends.Children.Add(blockButton);
-                    _stackPanelFriends.Children.Add(deleteButton);
-                    FriendsList.Items.Add(_stackPanelFriends);
-                }
+                friendsList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Accepted).ToList();
             }
+
+            foreach (var friend in friendsList)
+            {
+                _stackPanelFriends = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5)
+                };
+
+                var ellipse = new Ellipse
+                {
+                    Width = 45,
+                    Height = 45,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0)
+                };
+
+                var imageBrush = new ImageBrush()
+                {
+                    ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
+                    Stretch = Stretch.UniformToFill,
+                };
+
+                ellipse.Fill = imageBrush;
+
+                var textBlockUsername = new TextBlock
+                {
+                    Text = friend.Username,
+                    Foreground = Brushes.White,
+                    FontSize = 18,
+                    Margin = new Thickness(10)
+                };
+
+                var blockButton = new Button
+                {
+                    Content = "Block",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = friend.Username,
+                };
+
+                var deleteButton = new Button
+                {
+                    Content = "Delete",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e0343c")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = friend.Username,
+                };
+                blockButton.Click += BlockButton_Click;
+                deleteButton.Click += DeleteButton_Click;
+                _stackPanelFriends.Children.Add(ellipse);
+                _stackPanelFriends.Children.Add(textBlockUsername);
+                _stackPanelFriends.Children.Add(blockButton);
+                _stackPanelFriends.Children.Add(deleteButton);
+                FriendsList.Items.Add(_stackPanelFriends);
+            }
+
         }
 
         public void PopulatePendingFriendRequestsList()
         {
             PendingFriendsList.Items.Clear();
-            _stackPanelPending?.Children?.Clear();
+            _stackPanelPending?.Children.Clear();
 
-            lock (Client.pendingLock)
+            List<Friend> pendingList;
+            lock (Client.relationshipStateLock)
             {
-                foreach (var pending in Client.pendingFriendRequestsList)
+                pendingList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Pending).ToList();
+            }
+
+            foreach (var pending in pendingList)
+            {
+                _stackPanelPending = new StackPanel
                 {
-                    _stackPanelPending = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Margin = new Thickness(5)
-                    };
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5)
+                };
 
-                    var ellipse = new Ellipse
-                    {
-                        Width = 45,
-                        Height = 45,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 10, 0),
-                    };
+                var ellipse = new Ellipse
+                {
+                    Width = 45,
+                    Height = 45,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0),
+                };
 
-                    var imageBrush = new ImageBrush()
-                    {
-                        ImageSource = Client.GetBitmapImageFromBase64String(pending.Item3),
-                        Stretch = Stretch.UniformToFill,
-                    };
-                    ellipse.Fill = imageBrush;
+                var imageBrush = new ImageBrush()
+                {
+                    ImageSource = Client.GetBitmapImageFromBase64String(pending.ProfilPic),
+                    Stretch = Stretch.UniformToFill,
+                };
+                ellipse.Fill = imageBrush;
 
-                    var textBlock = new TextBlock
-                    {
-                        Text = pending.Item1,
-                        Foreground = Brushes.White,
-                        FontSize = 18,
-                        Margin = new Thickness(10)
-                    };
+                var textBlock = new TextBlock
+                {
+                    Text = pending.Username,
+                    Foreground = Brushes.White,
+                    FontSize = 18,
+                    Margin = new Thickness(10)
+                };
 
-                    var acceptButton = new Button
-                    {
-                        Content = "Accept",
-                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#288444")),
-                        Foreground = Brushes.White,
-                        Width = 80,
-                        Height = 30,
-                        Margin = new Thickness(5),
-                        Tag = pending.Item1
-                    };
-                    acceptButton.Click += AcceptButton_Click;
+                var acceptButton = new Button
+                {
+                    Content = "Accept",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#288444")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = pending.Username
+                };
+                acceptButton.Click += AcceptButton_Click;
 
-                    var declineButton = new Button
-                    {
-                        Content = "Decline",
-                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f44038")),
-                        Foreground = Brushes.White,
-                        Width = 80,
-                        Height = 30,
-                        Margin = new Thickness(5),
-                        Tag = pending.Item1
-                    };
-                    declineButton.Click += DeclineButton_Click;
+                var declineButton = new Button
+                {
+                    Content = "Decline",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f44038")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = pending.Username
+                };
+                declineButton.Click += DeclineButton_Click;
 
-                    var blockButton = new Button
-                    {
-                        Content = "Block",
-                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
-                        Foreground = Brushes.White,
-                        Width = 80,
-                        Height = 30,
-                        Margin = new Thickness(5),
-                        Tag = pending.Item1,
-                    };
-                    blockButton.Click += BlockButton_Click;
-                    _stackPanelPending.Children.Add(ellipse);
-                    _stackPanelPending.Children.Add(textBlock);
-                    _stackPanelPending.Children.Add(acceptButton);
-                    _stackPanelPending.Children.Add(declineButton);
-                    _stackPanelPending.Children.Add(blockButton);
-                    PendingFriendsList.Items.Add(_stackPanelPending);
-                }
+                var blockButton = new Button
+                {
+                    Content = "Block",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = pending.Username,
+                };
+                blockButton.Click += BlockButton_Click;
+                _stackPanelPending.Children.Add(ellipse);
+                _stackPanelPending.Children.Add(textBlock);
+                _stackPanelPending.Children.Add(acceptButton);
+                _stackPanelPending.Children.Add(declineButton);
+                _stackPanelPending.Children.Add(blockButton);
+                PendingFriendsList.Items.Add(_stackPanelPending);
             }
         }
 
@@ -211,19 +218,15 @@ namespace ClientMesseger
             var button = sender as Button;
             var username = button!.Tag as string;
 
-            var friendRequest = Client.pendingFriendRequestsList.Find(x => x.Item1 == username);
-
-            var friendId = friendRequest.Item2;
-            lock (Client.friendsLock)
+            Friend? friendRequest;
+            lock (Client.relationshipStateLock)
             {
-                Client.friendList.Add((username!, friendId, friendRequest.Item3));
+                friendRequest = Client.relationshipState.Find(x => x.Username == username);
             }
+
+            friendRequest!.Status = RelationshipStateEnum.Accepted;
+
             PopulateFriendsList();
-
-            lock (Client.pendingLock)
-            {
-                Client.pendingFriendRequestsList.Remove(friendRequest);
-            }
             PopulatePendingFriendRequestsList();
 
             var payload = new
@@ -231,7 +234,6 @@ namespace ClientMesseger
                 code = 14,
                 username = Client.Username,
                 userId = Client.Id,
-                friendId = friendRequest.Item2,
                 friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Accepted,
             };
@@ -243,11 +245,11 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int, string) friendRequest;
-            lock (Client.pendingLock)
+            
+            lock (Client.relationshipStateLock)
             {
-                friendRequest = Client.pendingFriendRequestsList.Find(x => x.Item1 == username);
-                Client.pendingFriendRequestsList.Remove(friendRequest);
+                var friendRequest = Client.relationshipState.Find(x => x.Username == username);
+                Client.relationshipState.Remove(friendRequest!);
             }
 
             PopulatePendingFriendRequestsList();
@@ -256,7 +258,6 @@ namespace ClientMesseger
                 code = 14,
                 username = Client.Username,
                 userId = Client.Id,
-                friendId = friendRequest.Item2,
                 friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Decline,
             };
@@ -268,26 +269,22 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int, string) friendRequest;
-            lock (Client.friendsLock)
-            {
-                friendRequest = Client.friendList.Find(x => x.Item1 == username);
-                Client.friendList.Remove(friendRequest);
-            }
+            Friend? friend;
 
-            lock (Client.pendingLock)
+            lock (Client.relationshipStateLock)
             {
-                Client.pendingFriendRequestsList.Remove(friendRequest);
+                friend = Client.relationshipState.Find(x => x.Username == username);
+                friend!.Status = RelationshipStateEnum.Blocked;
             }
 
             PopulateFriendsList();
             PopulatePendingFriendRequestsList();
+
             var payload = new
             {
                 code = 14,
                 username = Client.Username,
                 userId = Client.Id,
-                friendId = friendRequest.Item2,
                 friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Blocked,
             };
@@ -299,20 +296,21 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            (string, int, string) friendRequest;
-            lock (Client.friendsLock)
+            Friend? friend;
+
+            lock (Client.relationshipStateLock)
             {
-                friendRequest = Client.friendList.Find(x => x.Item1 == username);
-                Client.friendList.Remove(friendRequest);
+                friend = Client.relationshipState.Find(x => x.Username == username);
+                Client.relationshipState.Remove(friend!);
             }
 
             PopulateFriendsList();
+
             var payload = new
             {
                 code = 14,
                 username = Client.Username,
                 userId = Client.Id,
-                friendId = friendRequest.Item2,
                 friendUsername = username!,
                 task = (byte)RelationshipStateEnum.Delete,
             };
@@ -373,30 +371,25 @@ namespace ClientMesseger
                 return;
             }
 
-            lock (Client.pendingLock)
+            Friend? friend;
+            lock (Client.relationshipStateLock)
             {
-                if (Client.pendingFriendRequestsList.Any(x => x.Item1 == usernameReceiver))
-                {
-                    _ = SetAddFriendText("You already have a pending request from that person", Brushes.Red);
-                    return;
-                }
+                friend = Client.relationshipState.Find(x => x.Username == usernameReceiver);
             }
 
-            lock (Client.friendsLock)
+            if (friend != null)
             {
-                if (Client.friendList.Any((x) => x.Item1 == usernameReceiver))
+                switch (friend.Status)
                 {
-                    _ = SetAddFriendText("You already have that person added", Brushes.Red);
-                    return;
-                }
-            }
-
-            lock (Client.blockedLock)
-            {
-                if (Client.blockedList.Any(x => x.Item1 == usernameReceiver))
-                {
-                    _ = SetAddFriendText("You blocked or are blocked by that person", Brushes.Red);
-                    return;
+                    case RelationshipStateEnum.Accepted:
+                        _ = SetAddFriendText("You already have that person added", Brushes.Red);
+                        break;
+                    case RelationshipStateEnum.Blocked:
+                        _ = SetAddFriendText("You blocked or are blocked by that person", Brushes.Red);
+                        break;
+                    case RelationshipStateEnum.Pending:
+                        _ = SetAddFriendText("You already have a pending request from that person", Brushes.Red);
+                        break;
                 }
             }
 

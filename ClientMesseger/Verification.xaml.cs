@@ -6,7 +6,7 @@ using System.Windows;
 namespace ClientMesseger
 {
     /// <summary>
-    /// The logic behind the Verification screen (Verification.xaml)
+    /// The Logic behind the Verification screen (Verification.xaml)
     /// </summary>
     public sealed partial class Verification : Window
     {
@@ -37,7 +37,7 @@ namespace ClientMesseger
 
         #region Buttons_Click
         /// <summary>
-        /// The click logic for the hyperlink.
+        /// The click Logic for the hyperlink.
         /// It closes this window and opens up an Create account window.
         /// </summary>
         private async void Hyperlink_Click(object sender, RoutedEventArgs e)

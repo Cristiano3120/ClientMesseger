@@ -8,7 +8,7 @@ using System.Windows.Input;
 namespace ClientMesseger
 {
     /// <summary>
-    /// The logic behind the Account creation screen (CreateAccount.xaml)
+    /// The Logic behind the Account creation screen (CreateAccount.xaml)
     /// </summary>
     public sealed partial class CreateAccount : Window
     {
@@ -37,7 +37,7 @@ namespace ClientMesseger
         /// The constructor that is called when the user wants to create an account.
         /// Gets called from Login.xaml.cs.
         /// </summary>
-        /// <param name="window">The login screen gets saved so it can be opend or closed later.</param>
+        /// <param name="window">The Login screen gets saved so it can be opend or closed later.</param>
         public CreateAccount()
         {
             InitializeComponent();
@@ -298,7 +298,7 @@ namespace ClientMesseger
             var status = root.GetProperty("status").GetString();
             if (status == "None")
             {
-                _ = DisplayError.Log("Acc can be created!");
+                _ = DisplayError.LogAsync("Acc can be created!");
                 var verificationCode = new Random().Next(100000, 999999);
                 var payload = new
                 {
@@ -315,7 +315,7 @@ namespace ClientMesseger
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
-                _ = DisplayError.Log($"Code: {verificationCode}");
+                _ = DisplayError.LogAsync($"Code: {verificationCode}");
                 var verification = new Verification(this, _user, verificationCode);
                 verification.Show();
                 await Task.Delay(300);
@@ -325,12 +325,12 @@ namespace ClientMesseger
             {
                 if (string.IsNullOrEmpty(status))
                 {
-                    _ = DisplayError.Log("The Server doesn´t answer right now. Try again later!");
+                    _ = DisplayError.LogAsync("The Server doesn´t answer right now. Try again later!");
                     _ = CallErrorBox("The Server doesn´t answer right now. Try again later!");
                 }
                 else
                 {
-                    _ = DisplayError.Log($"The {status} is already being used. Pls enter another one!");
+                    _ = DisplayError.LogAsync($"The {status} is already being used. Pls enter another one!");
                     _ = CallErrorBox($"The {status} is already being used. Pls enter another one!");
                 }
             }

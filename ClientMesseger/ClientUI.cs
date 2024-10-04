@@ -97,7 +97,7 @@ namespace ClientMesseger
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        _ = DisplayError.Log("Closing a window");
+                        _ = DisplayError.LogAsync("Closing a window");
                         item.Close();
                     });
                 }
@@ -119,7 +119,7 @@ namespace ClientMesseger
                 });
                 return;
             }
-            _ = DisplayError.Log("Error(ClientUI.ChangeWindowState(): var window was null)");
+            _ = DisplayError.LogAsync("Error(ClientUI.ChangeWindowState(): var window was null)");
         }
 
         /// <summary>

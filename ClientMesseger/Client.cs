@@ -11,21 +11,17 @@ using System.Windows.Media.Imaging;
 namespace ClientMesseger
 {
     /// <summary>
-    /// The logic to communicate with the Server.
+    /// The Logic to communicate with the Server.
     /// </summary>
     internal static class Client
     {
-#pragma warning disable CS8618
+        #pragma warning disable CS8618
         private static TcpClient _client;
         public static BitmapImage ProfilPicture { get; set; }
         public static string? Username { get; set; }
         public static int Id { get; set; }
-        public static readonly List<(string, int, string)> friendList = new();
-        public static readonly List<(string, int, string)> pendingFriendRequestsList = new();
-        public static readonly List<(string, int, string)> blockedList = new();
-        public static readonly object friendsLock = new();
-        public static readonly object pendingLock = new();
-        public static readonly object blockedLock = new();
+        public static readonly List<Friend> relationshipState = new();
+        public static readonly object relationshipStateLock = new();
 
         public static async Task Start()
         {
@@ -38,9 +34,9 @@ namespace ClientMesseger
         Connect:
             try
             {
-                _ = DisplayError.Log("Trying to connect to server");
+                _ = DisplayError.LogAsync("Trying to connect to server");
                 await _client.ConnectAsync(ip, port, cancellationToken);
-                _ = DisplayError.Log("Connection to server succesful");
+                _ = DisplayError.LogAsync("Connection to server succesful");
                 Security.Initialize();
                 _ = Task.Run(() => { _ = ListenForMessages(); });
                 var loadingWindow = ClientUI.GetWindow<MainWindow>();
@@ -79,7 +75,7 @@ namespace ClientMesseger
             var fileName = "UserLoginData.txt";
             if (isoStorage.FileExists(fileName))
             {
-                _ = DisplayError.Log("Trying to auto login");
+                _ = DisplayError.LogAsync("Trying to auto Login");
                 using var isoStream = new IsolatedStorageFileStream(fileName, FileMode.Open, isoStorage);
                 using var reader = new StreamReader(isoStream);
                 var email = reader.ReadLine();
@@ -99,7 +95,7 @@ namespace ClientMesseger
             }
             else
             {
-                _ = DisplayError.Log("File for auto login couldnt be found.");
+                _ = DisplayError.LogAsync("File for auto Login couldnt be found.");
             }
         }
 
@@ -115,8 +111,8 @@ namespace ClientMesseger
                     Array.Copy(buffer, tempBuffer, bytesRead);
                     var root = Security.DecryptMessage(tempBuffer) ?? throw new Exception("Root was null");
                     var code = root.GetProperty("code").GetByte();
-                    _ = DisplayError.Log($"Received code {code}");
-                    _ = DisplayError.Log($"Received: {root}");
+                    _ = DisplayError.LogAsync($"Received code {code}");
+                    _ = DisplayError.LogAsync($"Received: {root}");
 
                     switch (code)
                     {
@@ -133,7 +129,7 @@ namespace ClientMesseger
                         case 7: //Feedback Creating acc
                             HandleServerMessages.FeedbackAccountCreation(root);
                             break;
-                        case 9: //Reiceving answer to the login request
+                        case 9: //Reiceving answer to the Login request
                             HandleServerMessages.FeedbackLogin(root);
                             break;
                         case 11: //Answer to the sent friendRequest
@@ -158,7 +154,7 @@ namespace ClientMesseger
                     DisplayError.DisplayBasicErrorInfos(ex, "Client", "ListenForMessages()");
                 }
             }
-            _ = DisplayError.Log("Lost connection to the Server");
+            _ = DisplayError.LogAsync("Lost connection to the Server");
             Restart();
         }
 
@@ -166,8 +162,8 @@ namespace ClientMesseger
         {
             try
             {
-                _ = DisplayError.Log($"Sending: {payload}");
-                _ = DisplayError.Log($"Trying to send {encryption} encrypted data");
+                _ = DisplayError.LogAsync($"Sending: {payload}");
+                _ = DisplayError.LogAsync($"Trying to send {encryption} encrypted data");
                 var buffer = payload != null ? Encoding.UTF8.GetBytes(payload) : throw new ArgumentNullException(nameof(payload));
                 switch (encryption)
                 {
@@ -190,11 +186,11 @@ namespace ClientMesseger
             }
             catch (ArgumentNullException)
             {
-                _ = DisplayError.Log($"Error(Client.SendPayloadAsync(): Payload was null)");
+                _ = DisplayError.LogAsync($"Error(Client.SendPayloadAsync(): Payload was null)");
             }
             catch (Exception ex)
             {
-                _ = DisplayError.Log($"Error(Client.SendPayloadAsync()): {ex.Message}");
+                _ = DisplayError.LogAsync($"Error(Client.SendPayloadAsync()): {ex.Message}");
             }
         }
 

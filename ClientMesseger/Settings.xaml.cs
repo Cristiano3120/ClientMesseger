@@ -72,14 +72,14 @@ namespace ClientMesseger
         private void Ellipse_MouseDown(object sender, MouseButtonEventArgs e)
         {
             // Open the file explorer
-            var openFileDialog = new OpenFileDialog
+            var openFileDiaLogAsnycAsnyc = new OpenFileDialog()
             {
                 Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg"
             };
 
-            if (openFileDialog.ShowDialog() == true)
+            if (openFileDiaLogAsnycAsnyc.ShowDialog() == true)
             {
-                var selectedFilePath = openFileDialog.FileName;
+                var selectedFilePath = openFileDiaLogAsnycAsnyc.FileName;
                 var bitmap = new BitmapImage();
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(selectedFilePath);

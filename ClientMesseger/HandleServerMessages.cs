@@ -50,7 +50,7 @@ namespace ClientMesseger
             var result = root.GetProperty("result");
             if (result.ValueKind == JsonValueKind.Null)
             {
-                _ = DisplayError.Log("Server couldnt connect to the database.");
+                _ = DisplayError.LogAsync("Server couldnt connect to the database.");
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     var login = ClientUI.GetWindow<Login>();
@@ -126,12 +126,18 @@ namespace ClientMesseger
         public static void ReceiveFriendrequest(JsonElement root)
         {
             var username = root.GetProperty("usernameSender").GetString();
-            var senderId = root.GetProperty("senderId").GetInt32();
             var profilPic = root.GetProperty("profilPic").GetString();
-            _ = DisplayError.Log($"{username} added you!");
-            lock (Client.pendingLock)
+            _ = DisplayError.LogAsync($"{username} added you!");
+
+            lock (Client.relationshipStateLock)
             {
-                Client.pendingFriendRequestsList.Add((username!, senderId, profilPic!));
+                var friend = new Friend()
+                {
+                    Username = username!,
+                    ProfilPic = profilPic!,
+                    Status = RelationshipStateEnum.Pending,
+                };
+                Client.relationshipState.Add(friend);
             }
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -150,36 +156,14 @@ namespace ClientMesseger
                 var friendsList = JsonSerializer.Deserialize<List<Friend>>(friendsElement.GetRawText());
                 foreach (var friend in friendsList!)
                 {
-                    if (friend.Status == RelationshipStateEnum.Pending)
+                    _ = DisplayError.LogAsync($"{friend.Username}: {friend.ProfilPic}");
+                    lock (Client.relationshipStateLock)
                     {
-                        _ = DisplayError.Log(RelationshipStateEnum.Pending);
-                        lock (Client.pendingLock)
-                        {
-                            Client.pendingFriendRequestsList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                        }
-                    }
-                    else if (friend.Status == RelationshipStateEnum.Accepted)
-                    {
-                        _ = DisplayError.Log(RelationshipStateEnum.Accepted);
-                        lock (Client.friendsLock)
-                        {
-                            Client.friendList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                        }
-                    }
-                    else if (friend.Status == RelationshipStateEnum.Blocked)
-                    {
-                        _ = DisplayError.Log("BLOCKED");
-                        lock (Client.blockedLock)
-                        {
-                            Client.blockedList.Add((friend.Username, friend.FriendId, friend.ProfilPic));
-                        }
-                    }
-                    else
-                    {
-                        _ = DisplayError.Log("An unknown friendship status was received");
+                        Client.relationshipState.Add(friend);
                     }
                 }
             }
+
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var home = ClientUI.GetWindow<Home>();
@@ -192,44 +176,24 @@ namespace ClientMesseger
         public static void UpdateRelationship(JsonElement root)
         {
             var sendingUsername = root.GetProperty("username").GetString();
-            var sendingId = root.GetProperty("userId").GetInt32();
             var sendingProfilPic = root.GetProperty("profilPic").GetString();
             var task = (RelationshipStateEnum)root.GetProperty("taskByte").GetByte();
 
-            if (task == RelationshipStateEnum.Blocked)
+            if (task == RelationshipStateEnum.Blocked || task == RelationshipStateEnum.Accepted)
             {
-                lock (Client.friendsLock)
+                lock (Client.relationshipStateLock)
                 {
-                    Client.friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                }
-                lock (Client.blockedLock)
-                {
-                    Client.blockedList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
+                    var friend = Client.relationshipState.Find(x => x.Username == sendingUsername);
+                    friend!.Status = task;
                 }
             }
-            else if (task == RelationshipStateEnum.Accepted)
+
+            if (task == RelationshipStateEnum.Decline || task == RelationshipStateEnum.Delete)
             {
-                lock (Client.pendingLock)
+                lock (Client.relationshipStateLock)
                 {
-                    Client.pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                }
-                lock (Client.friendsLock)
-                {
-                    Client.friendList.Add((sendingUsername!, sendingId!, sendingProfilPic!));
-                }
-            }
-            else if (task == RelationshipStateEnum.Decline)
-            {
-                lock (Client.pendingLock)
-                {
-                    Client.pendingFriendRequestsList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
-                }
-            }
-            else if (task == RelationshipStateEnum.Delete)
-            {
-                lock (Client.friendsLock)
-                {
-                    Client.friendList.Remove((sendingUsername!, sendingId!, sendingProfilPic!));
+                    var friend = Client.relationshipState.Find(x => x.Username == sendingUsername);
+                    Client.relationshipState.Remove(friend!);
                 }
             }
 

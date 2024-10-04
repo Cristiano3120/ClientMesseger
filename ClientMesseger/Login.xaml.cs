@@ -5,7 +5,7 @@ using System.Windows;
 namespace ClientMesseger
 {
     /// <summary>
-    /// The logic behind the Login screen (Login.xaml)
+    /// The Logic behind the Login screen (Login.xaml)
     /// </summary>
     public sealed partial class Login : Window
     {
@@ -35,7 +35,7 @@ namespace ClientMesseger
             {
                 _stopwatch.Restart();
             }
-            _ = DisplayError.Log("Sending request to login");
+            _ = DisplayError.LogAsync("Sending request to Login");
             var email = Email.Text;
             var password = Password.Text;
             var payload = new
