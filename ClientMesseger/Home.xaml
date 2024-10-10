@@ -33,7 +33,8 @@
 
             <!--Profile Picture-->
 
-            <Ellipse Width="45" Height="45" VerticalAlignment="Center" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="HighQuality">
+            <Ellipse Width="45" Height="45" VerticalAlignment="Center" Margin="10,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" Cursor="Hand"
+                     MouseLeftButtonDown="UsernameText_MouseLeftButtonDown">
                 <Ellipse.Fill>
                     <ImageBrush x:Name="ProfilPic" Stretch="UniformToFill"/>
                 </Ellipse.Fill>
@@ -60,11 +61,11 @@
         <!-- Main Content Section -->
         <Grid Margin="0,80,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="21*"/>
-                <ColumnDefinition Width="779*"/>
+                <ColumnDefinition Width="200*"/>
+                <ColumnDefinition Width="600*"/>
             </Grid.ColumnDefinitions>
             <!-- Panel for Friends List -->
-            <Grid x:Name="FriendsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
+            <Grid x:Name="FriendsPanel" Background="#222" HorizontalAlignment="Right" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="FriendsPanelTranslateTransform"/>
                 </Grid.RenderTransform>
@@ -72,7 +73,7 @@
             </Grid>
 
             <!-- Panel for Blocked List -->
-            <Grid x:Name="BlockedPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
+            <Grid x:Name="BlockedPanel" Background="#222" HorizontalAlignment="Right" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="BlockedPanelTranslateTransform"/>
                 </Grid.RenderTransform>
@@ -80,7 +81,7 @@
             </Grid>
 
             <!-- Panel for Pending Friend Requests -->
-            <Grid x:Name="PendingFriendRequestsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
+            <Grid x:Name="PendingFriendRequestsPanel" Background="#222" HorizontalAlignment="Right" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="PendingFriendRequestsTranslateTransform"/>
                 </Grid.RenderTransform>
@@ -89,7 +90,7 @@
             </Grid>
 
             <!-- Panel for AddFriend List -->
-            <Grid x:Name="AddFriendsPanel" Background="#222" HorizontalAlignment="Left" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1" Margin="179,0,0,0">
+            <Grid x:Name="AddFriendsPanel" Background="#222" HorizontalAlignment="Right" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1">
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="AddFriendsPanelTranslateTransform"/>
                 </Grid.RenderTransform>
