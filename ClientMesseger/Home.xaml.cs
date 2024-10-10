@@ -14,6 +14,7 @@ namespace ClientMesseger
         private StackPanel? _stackPanelPending;
         private StackPanel? _stackPanelFriends;
         private StackPanel? _stackPanelBlocked;
+        private StackPanel? _stackPanelChats;
         private readonly Stopwatch _stopwatch;
 
         public Home()
@@ -102,6 +103,8 @@ namespace ClientMesseger
             {
                 friendsList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Accepted).ToList();
             }
+
+            PopulateChats(friendsList);
 
             foreach (var friend in friendsList)
             {
@@ -270,7 +273,7 @@ namespace ClientMesseger
                 _stackPanelBlocked = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
-                    Margin = new Thickness(5)
+                    Margin = new Thickness(5),
                 };
 
                 var ellipse = new Ellipse
@@ -310,7 +313,46 @@ namespace ClientMesseger
                 _stackPanelBlocked?.Children.Add(ellipse);
                 _stackPanelBlocked?.Children.Add(textBlock);
                 _stackPanelBlocked?.Children.Add(blockButton);
-                PendingFriendsList.Items.Add(_stackPanelBlocked);
+                BlockedList.Items.Add(_stackPanelBlocked);
+            }
+        }
+
+        public void PopulateChats(List<Friend> friends)
+        {
+            foreach (var friend in friends)
+            {
+                _stackPanelChats = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5)
+                };
+
+                var ellipse = new Ellipse
+                {
+                    Width = 45,
+                    Height = 45,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0),
+                };
+
+                var imageBrush = new ImageBrush()
+                {
+                    ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
+                    Stretch = Stretch.UniformToFill,
+                };
+                ellipse.Fill = imageBrush;
+
+                var textBlock = new TextBlock
+                {
+                    Text = friend.Username,
+                    Foreground = Brushes.White,
+                    FontSize = 18,
+                    Margin = new Thickness(10)
+                };
+
+                _stackPanelChats?.Children.Add(ellipse);
+                _stackPanelChats?.Children.Add(textBlock);
+                ChatsList.Items.Add(_stackPanelChats);
             }
         }
 
@@ -333,6 +375,7 @@ namespace ClientMesseger
 
             PopulateFriendsList();
             PopulatePendingFriendRequestsList();
+
 
             var payload = new
             {
@@ -358,6 +401,7 @@ namespace ClientMesseger
             }
 
             PopulatePendingFriendRequestsList();
+
             var payload = new
             {
                 code = 14,
@@ -384,6 +428,7 @@ namespace ClientMesseger
 
             PopulateFriendsList();
             PopulatePendingFriendRequestsList();
+            PopulateBlockedList();
 
             var payload = new
             {
@@ -504,7 +549,7 @@ namespace ClientMesseger
 
         private void ShowPendingFriendRequests(object sender, RoutedEventArgs args)
         {
-            var translateTransform = PendingFriendRequestsTranslateTransform;  
+            var translateTransform = PendingFriendRequestsTranslateTransform;
             CloseOrOpenPanel(PendingFriendRequestsPanel, translateTransform);
         }
 

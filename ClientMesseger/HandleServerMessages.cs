@@ -169,6 +169,7 @@ namespace ClientMesseger
                 var home = ClientUI.GetWindow<Home>();
                 home?.PopulatePendingFriendRequestsList();
                 home?.PopulateFriendsList();
+                home?.PopulateBlockedList();
             });
         }
 
@@ -202,6 +203,7 @@ namespace ClientMesseger
                 var home = ClientUI.GetWindow<Home>();
                 home?.PopulateFriendsList();
                 home?.PopulatePendingFriendRequestsList();
+                home?.PopulateBlockedList();
             });
         }
 
