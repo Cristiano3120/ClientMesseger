@@ -13,6 +13,7 @@ namespace ClientMesseger
     {
         private StackPanel? _stackPanelPending;
         private StackPanel? _stackPanelFriends;
+        private StackPanel? _stackPanelBlocked;
         private readonly Stopwatch _stopwatch;
 
         public Home()
@@ -32,6 +33,43 @@ namespace ClientMesseger
             ProfilPic.ImageSource = image;
         }
 
+        public void CloseOrOpenPanel(Grid grid, TranslateTransform translateTransform)
+        {
+            if (grid.Visibility == Visibility.Visible)
+            {
+                var slideOutAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = grid.Width,
+                    Duration = TimeSpan.FromSeconds(0.3)
+                };
+
+                slideOutAnimation.Completed += (s, a) =>
+                {
+                    grid.Visibility = Visibility.Collapsed;
+                };
+                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
+            }
+            else
+            {
+                BlockedPanel.Visibility = Visibility.Collapsed;
+                AddFriendsPanel.Visibility = Visibility.Collapsed;
+                FriendsPanel.Visibility = Visibility.Collapsed;
+                PendingFriendRequestsPanel.Visibility = Visibility.Collapsed;
+
+                grid.Visibility = Visibility.Visible;
+                var slideInAnimation = new DoubleAnimation
+                {
+                    From = grid.Width,
+                    To = 0,
+                    Duration = TimeSpan.FromSeconds(0.3)
+                };
+                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
+            }
+        }
+
+        #region SetAddFriendText
+
         public async Task SetAddFriendText(string input, Brush color)
         {
             friendNameTextBlock.Foreground = color;
@@ -49,6 +87,10 @@ namespace ClientMesseger
             friendNameTextBlock.Foreground = Brushes.White;
             friendNameTextBlock.Text = "Enter a Username";
         }
+
+        #endregion
+
+        #region PopulateLists
 
         public void PopulateFriendsList()
         {
@@ -211,6 +253,69 @@ namespace ClientMesseger
             }
         }
 
+        public void PopulateBlockedList()
+        {
+            BlockedList.Items.Clear();
+            _stackPanelBlocked?.Children.Clear();
+
+            List<Friend> blockedList;
+            lock (Client.relationshipStateLock)
+            {
+                blockedList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Blocked).ToList();
+                blockedList.Add(new Friend() { ProfilPic = "", Status = RelationshipStateEnum.Blocked, Username = "dhjfc" });
+            }
+
+            foreach (var blocked in blockedList)
+            {
+                _stackPanelBlocked = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(5)
+                };
+
+                var ellipse = new Ellipse
+                {
+                    Width = 45,
+                    Height = 45,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 10, 0),
+                };
+
+                var imageBrush = new ImageBrush()
+                {
+                    ImageSource = Client.GetBitmapImageFromBase64String(blocked.ProfilPic),
+                    Stretch = Stretch.UniformToFill,
+                };
+                ellipse.Fill = imageBrush;
+
+                var textBlock = new TextBlock
+                {
+                    Text = blocked.Username,
+                    Foreground = Brushes.White,
+                    FontSize = 18,
+                    Margin = new Thickness(10)
+                };
+
+                var blockButton = new Button
+                {
+                    Content = "Unblock",
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#302c34")),
+                    Foreground = Brushes.White,
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(5),
+                    Tag = blocked.Username,
+                };
+                blockButton.Click += UnblockButton_Click;
+                _stackPanelBlocked?.Children.Add(ellipse);
+                _stackPanelBlocked?.Children.Add(textBlock);
+                _stackPanelBlocked?.Children.Add(blockButton);
+                PendingFriendsList.Items.Add(_stackPanelBlocked);
+            }
+        }
+
+        #endregion
+
         #region Buttons_Click
 
         private void AcceptButton_Click(object sender, RoutedEventArgs e)
@@ -245,7 +350,7 @@ namespace ClientMesseger
         {
             var button = sender as Button;
             var username = button!.Tag as string;
-            
+
             lock (Client.relationshipStateLock)
             {
                 var friendRequest = Client.relationshipState.Find(x => x.Username == username);
@@ -318,47 +423,30 @@ namespace ClientMesseger
             _ = Client.SendPayloadAsync(jsonString);
         }
 
-        private void ShowPendingFriendRequests(object sender, RoutedEventArgs args)
+        private void UnblockButton_Click(object sender, RoutedEventArgs e)
         {
-            var translateTransform = PendingFriendRequestsTranslateTransform;
+            var button = sender as Button;
+            var username = button!.Tag as string;
+            Friend? friend;
 
-            if (AddFriendsPanel.Visibility == Visibility.Visible)
+            lock (Client.relationshipStateLock)
             {
-                AddFriendsPanel.Visibility = Visibility.Collapsed;
+                friend = Client.relationshipState.Find(x => x.Username == username);
+                Client.relationshipState.Remove(friend!);
             }
 
-            if (FriendsPanel.Visibility == Visibility.Visible)
-            {
-                FriendsPanel.Visibility = Visibility.Collapsed;
-            }
+            PopulateBlockedList();
 
-            if (PendingFriendRequestsPanel.Visibility == Visibility.Collapsed)
+            var payload = new
             {
-                PendingFriendRequestsPanel.Visibility = Visibility.Visible;
-                var slideInAnimation = new DoubleAnimation
-                {
-                    From = PendingFriendRequestsPanel.Width,
-                    To = 0,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
-            }
-            else
-            {
-                var slideOutAnimation = new DoubleAnimation
-                {
-                    From = 0,
-                    To = PendingFriendRequestsPanel.Width,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-
-                slideOutAnimation.Completed += (s, a) =>
-                {
-                    PendingFriendRequestsPanel.Visibility = Visibility.Collapsed;
-                };
-
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
-            }
+                code = 14,
+                username = Client.Username,
+                userId = Client.Id,
+                friendUsername = username!,
+                task = (byte)RelationshipStateEnum.Unblocked,
+            };
+            var jsonString = JsonSerializer.Serialize(payload);
+            _ = Client.SendPayloadAsync(jsonString);
         }
 
         private void OnFriendAdded_Click(object sender, RoutedEventArgs args)
@@ -414,89 +502,28 @@ namespace ClientMesseger
             }
         }
 
+        private void ShowPendingFriendRequests(object sender, RoutedEventArgs args)
+        {
+            var translateTransform = PendingFriendRequestsTranslateTransform;  
+            CloseOrOpenPanel(PendingFriendRequestsPanel, translateTransform);
+        }
+
         private void ShowFriendsPanel(object sender, RoutedEventArgs args)
         {
             var translateTransform = FriendsPanelTranslateTransform;
-            if (AddFriendsPanel.Visibility == Visibility.Visible)
-            {
-                AddFriendsPanel.Visibility = Visibility.Collapsed;
-            }
-
-            if (PendingFriendRequestsPanel.Visibility == Visibility.Visible)
-            {
-                PendingFriendRequestsPanel.Visibility = Visibility.Collapsed;
-            }
-
-            if (FriendsPanel.Visibility == Visibility.Collapsed)
-            {
-                FriendsPanel.Visibility = Visibility.Visible;
-
-                var slideInAnimation = new DoubleAnimation
-                {
-                    From = FriendsPanel.Width,
-                    To = 0,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
-            }
-            else
-            {
-                var slideOutAnimation = new DoubleAnimation
-                {
-                    From = 0,
-                    To = FriendsPanel.Width,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-
-                slideOutAnimation.Completed += (s, a) =>
-                {
-                    FriendsPanel.Visibility = Visibility.Collapsed;
-                };
-
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
-            }
+            CloseOrOpenPanel(FriendsPanel, translateTransform);
         }
 
         private void ShowAddFriendPanel(object sender, RoutedEventArgs args)
         {
             var translateTransform = AddFriendsPanelTranslateTransform;
-            if (FriendsPanel.Visibility == Visibility.Visible)
-            {
-                FriendsPanel.Visibility = Visibility.Collapsed;
-            }
+            CloseOrOpenPanel(AddFriendsPanel, translateTransform);
+        }
 
-            if (PendingFriendRequestsPanel.Visibility == Visibility.Visible)
-            {
-                PendingFriendRequestsPanel.Visibility = Visibility.Collapsed;
-            }
-
-            if (AddFriendsPanel.Visibility == Visibility.Collapsed)
-            {
-                AddFriendsPanel.Visibility = Visibility.Visible;
-
-                var slideInAnimation = new DoubleAnimation
-                {
-                    From = AddFriendsPanel.Width,
-                    To = 0,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
-            }
-            else
-            {
-                var slideOutAnimation = new DoubleAnimation
-                {
-                    From = 0,
-                    To = AddFriendsPanel.Width,
-                    Duration = TimeSpan.FromSeconds(0.3)
-                };
-
-                slideOutAnimation.Completed += (s, a) =>
-                {
-                    AddFriendsPanel.Visibility = Visibility.Collapsed;
-                };
-                translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
-            }
+        private void ShowBlockedPanel(object sender, RoutedEventArgs args)
+        {
+            var translateTransform = BlockedPanelTranslateTransform;
+            CloseOrOpenPanel(BlockedPanel, translateTransform);
         }
 
         private void UsernameText_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

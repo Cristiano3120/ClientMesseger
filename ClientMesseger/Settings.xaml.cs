@@ -40,7 +40,7 @@ namespace ClientMesseger
             switch (selectedText)
             {
                 case "Profil":
-                    Console.WriteLine("Profil");
+                    _ = DisplayError.LogAsync("Profil settings panel opend");
                     ChangeActivePanel(ProfilPanel);
                     break;
                 case "Language":

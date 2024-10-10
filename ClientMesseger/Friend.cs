@@ -1,6 +1,6 @@
 ﻿namespace ClientMesseger
 {
-    public sealed record Friend
+    public sealed class Friend
     {
         public required string Username { get; set; }
         public required RelationshipStateEnum Status { get; set; }
