@@ -11,10 +11,6 @@ namespace ClientMesseger
 {
     public partial class Home : Window
     {
-        private StackPanel? _stackPanelPending;
-        private StackPanel? _stackPanelFriends;
-        private StackPanel? _stackPanelBlocked;
-        private StackPanel? _stackPanelChats;
         private readonly Stopwatch _stopwatch;
 
         public Home()
@@ -96,7 +92,6 @@ namespace ClientMesseger
         public void PopulateFriendsList()
         {
             FriendsList.Items.Clear();
-            _stackPanelFriends?.Children.Clear();
 
             List<Friend> friendsList;
             lock (Client.relationshipStateLock)
@@ -108,7 +103,7 @@ namespace ClientMesseger
 
             foreach (var friend in friendsList)
             {
-                _stackPanelFriends = new StackPanel
+                var stackPanelFriends = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5)
@@ -146,7 +141,7 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = friend.Username,
+                    Tag = (friend.Username, RelationshipStateEnum.Blocked),
                 };
 
                 var deleteButton = new Button
@@ -157,23 +152,21 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = friend.Username,
+                    Tag = (friend.Username, RelationshipStateEnum.Delete),
                 };
-                blockButton.Click += BlockButton_Click;
-                deleteButton.Click += DeleteButton_Click;
-                _stackPanelFriends.Children.Add(ellipse);
-                _stackPanelFriends.Children.Add(textBlockUsername);
-                _stackPanelFriends.Children.Add(blockButton);
-                _stackPanelFriends.Children.Add(deleteButton);
-                FriendsList.Items.Add(_stackPanelFriends);
+                blockButton.Click += RelationshipStateChange_Click;
+                deleteButton.Click += RelationshipStateChange_Click;
+                stackPanelFriends.Children.Add(ellipse);
+                stackPanelFriends.Children.Add(textBlockUsername);
+                stackPanelFriends.Children.Add(blockButton);
+                stackPanelFriends.Children.Add(deleteButton);
+                FriendsList.Items.Add(stackPanelFriends);
             }
-
         }
 
         public void PopulatePendingFriendRequestsList()
         {
             PendingFriendsList.Items.Clear();
-            _stackPanelPending?.Children.Clear();
 
             List<Friend> pendingList;
             lock (Client.relationshipStateLock)
@@ -183,7 +176,7 @@ namespace ClientMesseger
 
             foreach (var pending in pendingList)
             {
-                _stackPanelPending = new StackPanel
+                var stackPanelPending = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5)
@@ -220,9 +213,9 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = pending.Username
+                    Tag = (pending.Username, RelationshipStateEnum.Accepted)
                 };
-                acceptButton.Click += AcceptButton_Click;
+                acceptButton.Click += RelationshipStateChange_Click;
 
                 var declineButton = new Button
                 {
@@ -232,9 +225,9 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = pending.Username
+                    Tag = (pending.Username, RelationshipStateEnum.Decline)
                 };
-                declineButton.Click += DeclineButton_Click;
+                declineButton.Click += RelationshipStateChange_Click;
 
                 var blockButton = new Button
                 {
@@ -244,33 +237,31 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = pending.Username,
+                    Tag = (pending.Username, RelationshipStateEnum.Blocked),
                 };
-                blockButton.Click += BlockButton_Click;
-                _stackPanelPending.Children.Add(ellipse);
-                _stackPanelPending.Children.Add(textBlock);
-                _stackPanelPending.Children.Add(acceptButton);
-                _stackPanelPending.Children.Add(declineButton);
-                _stackPanelPending.Children.Add(blockButton);
-                PendingFriendsList.Items.Add(_stackPanelPending);
+                blockButton.Click += RelationshipStateChange_Click;
+                stackPanelPending.Children.Add(ellipse);
+                stackPanelPending.Children.Add(textBlock);
+                stackPanelPending.Children.Add(acceptButton);
+                stackPanelPending.Children.Add(declineButton);
+                stackPanelPending.Children.Add(blockButton);
+                PendingFriendsList.Items.Add(stackPanelPending);
             }
         }
 
         public void PopulateBlockedList()
         {
             BlockedList.Items.Clear();
-            _stackPanelBlocked?.Children.Clear();
 
             List<Friend> blockedList;
             lock (Client.relationshipStateLock)
             {
                 blockedList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Blocked).ToList();
-                blockedList.Add(new Friend() { ProfilPic = "", Status = RelationshipStateEnum.Blocked, Username = "dhjfc" });
             }
 
             foreach (var blocked in blockedList)
             {
-                _stackPanelBlocked = new StackPanel
+                var stackPanelBlocked = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5),
@@ -307,13 +298,13 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = blocked.Username,
+                    Tag = (blocked.Username, RelationshipStateEnum.Unblocked) 
                 };
-                blockButton.Click += UnblockButton_Click;
-                _stackPanelBlocked?.Children.Add(ellipse);
-                _stackPanelBlocked?.Children.Add(textBlock);
-                _stackPanelBlocked?.Children.Add(blockButton);
-                BlockedList.Items.Add(_stackPanelBlocked);
+                blockButton.Click += RelationshipStateChange_Click;
+                stackPanelBlocked?.Children.Add(ellipse);
+                stackPanelBlocked?.Children.Add(textBlock);
+                stackPanelBlocked?.Children.Add(blockButton);
+                BlockedList.Items.Add(stackPanelBlocked);
             }
         }
 
@@ -321,7 +312,7 @@ namespace ClientMesseger
         {
             foreach (var friend in friends)
             {
-                _stackPanelChats = new StackPanel
+                var stackPanelChats = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5)
@@ -350,9 +341,9 @@ namespace ClientMesseger
                     Margin = new Thickness(10)
                 };
 
-                _stackPanelChats?.Children.Add(ellipse);
-                _stackPanelChats?.Children.Add(textBlock);
-                ChatsList.Items.Add(_stackPanelChats);
+                stackPanelChats?.Children.Add(ellipse);
+                stackPanelChats?.Children.Add(textBlock);
+                ChatsList.Items.Add(stackPanelChats);
             }
         }
 
@@ -360,138 +351,51 @@ namespace ClientMesseger
 
         #region Buttons_Click
 
-        private void AcceptButton_Click(object sender, RoutedEventArgs e)
+        public void RelationshipStateChange_Click(object sender, RoutedEventArgs args)
         {
-            var button = sender as Button;
-            var username = button!.Tag as string;
-
-            Friend? friendRequest;
-            lock (Client.relationshipStateLock)
+            try
             {
-                friendRequest = Client.relationshipState.Find(x => x.Username == username);
+                if (sender is Button button && button.Tag is (string username, RelationshipStateEnum task))
+                {
+                    Friend? relation;
+                    Console.WriteLine(task.ToVerb());
+
+                    lock (Client.relationshipStateLock)
+                    {
+                        relation = Client.relationshipState.Find(x => x.Username == username) 
+                            ?? throw new Exception("Error while trying to interact with that user.");
+
+                        if (task == RelationshipStateEnum.Accepted || task == RelationshipStateEnum.Blocked)
+                        {
+                            relation.Status = task;
+                        }
+                        else
+                        {
+                            Client.relationshipState.Remove(relation);
+                        }
+                    }
+
+                    PopulateFriendsList();
+                    PopulatePendingFriendRequestsList();
+                    PopulateBlockedList();
+
+                    var payload = new
+                    {
+                        code = 14,
+                        username = Client.Username,
+                        userId = Client.Id,
+                        friendUsername = username,
+                        task,
+                    };
+                    var jsonString = JsonSerializer.Serialize(payload);
+                    _ = Client.SendPayloadAsync(jsonString);
+                }
             }
-
-            friendRequest!.Status = RelationshipStateEnum.Accepted;
-
-            PopulateFriendsList();
-            PopulatePendingFriendRequestsList();
-
-
-            var payload = new
+            catch (Exception ex)
             {
-                code = 14,
-                username = Client.Username,
-                userId = Client.Id,
-                friendUsername = username!,
-                task = (byte)RelationshipStateEnum.Accepted,
-            };
-            var jsonString = JsonSerializer.Serialize(payload);
-            _ = Client.SendPayloadAsync(jsonString);
-        }
-
-        private void DeclineButton_Click(object sender, RoutedEventArgs e)
-        {
-            var button = sender as Button;
-            var username = button!.Tag as string;
-
-            lock (Client.relationshipStateLock)
-            {
-                var friendRequest = Client.relationshipState.Find(x => x.Username == username);
-                Client.relationshipState.Remove(friendRequest!);
+                MessageBox.Show(ex.Message);
+                DisplayError.DisplayBasicErrorInfos(ex, "Home.xaml.cs", "RelationshipStateChange_Click");
             }
-
-            PopulatePendingFriendRequestsList();
-
-            var payload = new
-            {
-                code = 14,
-                username = Client.Username,
-                userId = Client.Id,
-                friendUsername = username!,
-                task = (byte)RelationshipStateEnum.Decline,
-            };
-            var jsonString = JsonSerializer.Serialize(payload);
-            _ = Client.SendPayloadAsync(jsonString);
-        }
-
-        private void BlockButton_Click(object sender, RoutedEventArgs e)
-        {
-            var button = sender as Button;
-            var username = button!.Tag as string;
-            Friend? friend;
-
-            lock (Client.relationshipStateLock)
-            {
-                friend = Client.relationshipState.Find(x => x.Username == username);
-                friend!.Status = RelationshipStateEnum.Blocked;
-            }
-
-            PopulateFriendsList();
-            PopulatePendingFriendRequestsList();
-            PopulateBlockedList();
-
-            var payload = new
-            {
-                code = 14,
-                username = Client.Username,
-                userId = Client.Id,
-                friendUsername = username!,
-                task = (byte)RelationshipStateEnum.Blocked,
-            };
-            var jsonString = JsonSerializer.Serialize(payload);
-            _ = Client.SendPayloadAsync(jsonString);
-        }
-
-        private void DeleteButton_Click(object sender, RoutedEventArgs e)
-        {
-            var button = sender as Button;
-            var username = button!.Tag as string;
-            Friend? friend;
-
-            lock (Client.relationshipStateLock)
-            {
-                friend = Client.relationshipState.Find(x => x.Username == username);
-                Client.relationshipState.Remove(friend!);
-            }
-
-            PopulateFriendsList();
-
-            var payload = new
-            {
-                code = 14,
-                username = Client.Username,
-                userId = Client.Id,
-                friendUsername = username!,
-                task = (byte)RelationshipStateEnum.Delete,
-            };
-            var jsonString = JsonSerializer.Serialize(payload);
-            _ = Client.SendPayloadAsync(jsonString);
-        }
-
-        private void UnblockButton_Click(object sender, RoutedEventArgs e)
-        {
-            var button = sender as Button;
-            var username = button!.Tag as string;
-            Friend? friend;
-
-            lock (Client.relationshipStateLock)
-            {
-                friend = Client.relationshipState.Find(x => x.Username == username);
-                Client.relationshipState.Remove(friend!);
-            }
-
-            PopulateBlockedList();
-
-            var payload = new
-            {
-                code = 14,
-                username = Client.Username,
-                userId = Client.Id,
-                friendUsername = username!,
-                task = (byte)RelationshipStateEnum.Unblocked,
-            };
-            var jsonString = JsonSerializer.Serialize(payload);
-            _ = Client.SendPayloadAsync(jsonString);
         }
 
         private void OnFriendAdded_Click(object sender, RoutedEventArgs args)

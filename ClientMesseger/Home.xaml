@@ -52,10 +52,10 @@
             <Button x:Name="btnFriends" Grid.Column="3" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Friends" HorizontalAlignment="Right" Click="ShowFriendsPanel"/>
 
             <!-- Add Friend Button -->
-            <Button Grid.Column="5" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Add Friend" HorizontalAlignment="Right" Click="ShowAddFriendPanel"/>
+            <Button Grid.Column="5" x:Name ="btnAddFriendPanel" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Add Friend" HorizontalAlignment="Right" Click="ShowAddFriendPanel"/>
 
-            <!-- Add Friend Button -->
-            <Button Grid.Column="4" Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Blocked" HorizontalAlignment="Right" Click="ShowBlockedPanel"/>
+            <!-- Blocked Button -->
+            <Button Grid.Column="4" x:Name="btnBlocked"  Height="40" Width="100" Margin="10,0,10,0" Background="#555" Foreground="White" BorderBrush="Transparent" Content="Blocked" HorizontalAlignment="Right" Click="ShowBlockedPanel"/>
         </Grid>
 
         <!-- Main Content Section -->
