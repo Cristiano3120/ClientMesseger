@@ -25,6 +25,8 @@ namespace ClientMesseger
 
         public static async Task Start()
         {
+            relationshipState.Add(new Friend() { Username = "Cris", ProfilPic = "", Status = RelationshipStateEnum.Accepted});
+            relationshipState.Add(new Friend() { Username = "Cris2", ProfilPic = "", Status = RelationshipStateEnum.Accepted});
             AllocConsole();
             DisplayError.Initialize();
             _client = new TcpClient();

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,7 @@ namespace ClientMesseger
     public partial class Home : Window
     {
         private readonly Stopwatch _stopwatch;
+        private readonly ConcurrentDictionary<string, Grid> _chats;
 
         public Home()
         {
@@ -23,6 +25,16 @@ namespace ClientMesseger
             ProfilPic.ImageSource = Client.ProfilPicture;
             UsernameText.Text = Client.Username;
             _stopwatch = new Stopwatch();
+            _chats = new();
+            ChatsList.SelectionChanged += (s, args) =>
+            {
+                Console.WriteLine("Changed");
+                var selectedItem = (ListBoxItem)ChatsList.SelectedItem;
+                var key = (string)selectedItem.Tag;
+                var grid = _chats[key];
+                PanelChat.Children.Clear();
+                PanelChat.Children.Add(grid);
+            };
         }
 
         public void OnProfilPicChanged(BitmapImage image)
@@ -45,6 +57,18 @@ namespace ClientMesseger
                 {
                     grid.Visibility = Visibility.Collapsed;
                 };
+
+                if (ChatsList.SelectedIndex != -1)
+                {
+                    var listBoxItem = (ListBoxItem)ChatsList.SelectedItem;
+                    var key = (string)listBoxItem.Tag;
+
+                    if (_chats.TryGetValue(key, out var stackPanel))
+                    {
+                        stackPanel.Visibility = Visibility.Visible;
+                    }
+                }
+                
                 translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
             }
             else
@@ -60,6 +84,21 @@ namespace ClientMesseger
                     From = grid.Width,
                     To = 0,
                     Duration = TimeSpan.FromSeconds(0.3)
+                };
+
+                //Der zu letzt geöffnete Chat
+                slideInAnimation.Completed += (sender, args) =>
+                {
+                    if (ChatsList.SelectedIndex != -1)
+                    {
+                        var listBoxItem = (ListBoxItem)ChatsList.SelectedItem;
+                        var key = (string)listBoxItem.Tag;
+
+                        if (_chats.TryGetValue(key, out var stackPanel))
+                        {
+                            stackPanel.Visibility = Visibility.Collapsed;
+                        }
+                    }
                 };
                 translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
             }
@@ -99,7 +138,7 @@ namespace ClientMesseger
                 friendsList = Client.relationshipState.Where(x => x.Status == RelationshipStateEnum.Accepted).ToList();
             }
 
-            PopulateChats(friendsList);
+            PopulateChatList(friendsList);
 
             foreach (var friend in friendsList)
             {
@@ -298,7 +337,7 @@ namespace ClientMesseger
                     Width = 80,
                     Height = 30,
                     Margin = new Thickness(5),
-                    Tag = (blocked.Username, RelationshipStateEnum.Unblocked) 
+                    Tag = (blocked.Username, RelationshipStateEnum.Unblocked)
                 };
                 blockButton.Click += RelationshipStateChange_Click;
                 stackPanelBlocked?.Children.Add(ellipse);
@@ -308,17 +347,17 @@ namespace ClientMesseger
             }
         }
 
-        public void PopulateChats(List<Friend> friends)
+        public void PopulateChatList(List<Friend> friends)
         {
             foreach (var friend in friends)
             {
-                var stackPanelChats = new StackPanel
+                var stackPanelChat = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Margin = new Thickness(5)
                 };
 
-                var ellipse = new Ellipse
+                var ellipseList = new Ellipse
                 {
                     Width = 45,
                     Height = 45,
@@ -331,7 +370,7 @@ namespace ClientMesseger
                     ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
                     Stretch = Stretch.UniformToFill,
                 };
-                ellipse.Fill = imageBrush;
+                ellipseList.Fill = imageBrush;
 
                 var textBlock = new TextBlock
                 {
@@ -341,9 +380,271 @@ namespace ClientMesseger
                     Margin = new Thickness(10)
                 };
 
-                stackPanelChats?.Children.Add(ellipse);
-                stackPanelChats?.Children.Add(textBlock);
-                ChatsList.Items.Add(stackPanelChats);
+                stackPanelChat?.Children.Add(ellipseList);
+                stackPanelChat?.Children.Add(textBlock);
+
+                var listBoxItem = new ListBoxItem
+                {
+                    Content = stackPanelChat,
+                    Tag = friend.Username
+                };
+                ChatsList.Items.Add(listBoxItem);
+                PopulateChat(friend, new List<Message> { new Message() { Content = "Das ist ein Test", Time = DateTime.Now } });
+                AddMessage(friend, new Message() { Content = "Message 2", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 3", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
+                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
+            }
+        }
+
+        public void PopulateChat(Friend friend, List<Message> messages)
+        {
+            var mainGrid = new Grid
+            {
+                Margin = new Thickness(10)
+            };
+
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var scrollViewer = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Hidden,
+            };
+
+            var chatStackPanel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+
+            foreach (var (time, content) in messages)
+            {
+                var outerStackPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(10),
+                };
+
+                var imageBrush = new ImageBrush()
+                {
+                    ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
+                    Stretch = Stretch.UniformToFill,
+                };
+
+                var ellipse = new Ellipse
+                {
+                    Width = 45,
+                    Height = 45,
+                    Margin = new Thickness(0, 0, 10, 0),
+                    Fill = imageBrush
+                };
+
+                var innerStackPanel = new StackPanel
+                {
+                    Orientation = Orientation.Vertical,
+                    Width = 300,
+                };
+
+                var nameAndTimePanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                };
+
+                var nameTextBlock = new TextBlock
+                {
+                    Text = friend.Username,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 16,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = Brushes.LightGray,
+                    Margin = new Thickness(0, 0, 20, 0)
+                };
+
+                var dateTimeTextBlock = new TextBlock
+                {
+                    Text = time.ToString("dd.MM.yyyy HH:mm"),
+                    FontSize = 12,
+                    Foreground = Brushes.Gray,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                nameAndTimePanel.Children.Add(nameTextBlock);
+                nameAndTimePanel.Children.Add(dateTimeTextBlock);
+
+                var messageTextBlock = new TextBlock
+                {
+                    Text = content,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 5, 0, 0),
+                    FontSize = 14,
+                    Foreground = Brushes.LightGray
+                };
+
+                innerStackPanel.Children.Add(nameAndTimePanel);
+                innerStackPanel.Children.Add(messageTextBlock);
+                outerStackPanel.Children.Add(ellipse);
+                outerStackPanel.Children.Add(innerStackPanel);
+                chatStackPanel.Children.Add(outerStackPanel);
+            }
+
+            scrollViewer.Content = chatStackPanel;
+            Grid.SetRow(scrollViewer, 0);
+            mainGrid.Children.Add(scrollViewer);
+
+            var inputPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(10, 10, 10, 0)
+            };
+
+            var textBox = new TextBox
+            {
+                Width = 300,
+                Height = 30,
+                Foreground = Brushes.LightGray,
+                Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#403c44")!,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            
+            void SendButtonClick(object sender, RoutedEventArgs args)
+            {
+                _ = DisplayError.LogAsync("Sent Message");
+                var listBoxItem = (ListBoxItem)ChatsList.SelectedItem;
+                var friendUsername = (string)listBoxItem.Tag;
+                
+                var payload = new
+                {
+                    code = 18,
+                    message = textBox.Text,
+                    friendUsername = friend.Username,
+                    username = Client.Username,
+                };
+                var jsonString = JsonSerializer.Serialize(payload);
+                _ = Client.SendPayloadAsync(jsonString);
+            }
+
+            var sendButton = new Button
+            {
+                Content = "Send",
+                Width = 100,
+                Height = 30, 
+            };
+            sendButton.Click += SendButtonClick;
+
+            inputPanel.Children.Add(textBox);
+            inputPanel.Children.Add(sendButton);
+
+            Grid.SetRow(inputPanel, 1);
+            mainGrid.Children.Add(inputPanel);
+
+            Grid AddFunc(string s)
+            {
+                return mainGrid;
+            }
+
+            Grid UpdateFunc(string s, Grid panel)
+            {
+                panel.Children.Add(mainGrid);
+                return panel;
+            }
+
+            _chats.AddOrUpdate(friend.Username, AddFunc, UpdateFunc);
+        }
+
+        private static StackPanel CreateMessagePanel(Friend friend, DateTime time, string content)
+        {
+            var outerStackPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(10),
+            };
+
+            var imageBrush = new ImageBrush
+            {
+                ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
+                Stretch = Stretch.UniformToFill,
+            };
+
+            var ellipse = new Ellipse
+            {
+                Width = 45,
+                Height = 45,
+                Margin = new Thickness(0, 0, 10, 0),
+                Fill = imageBrush
+            };
+
+            var innerStackPanel = new StackPanel
+            {
+                Orientation = Orientation.Vertical,
+                Width = 300,
+            };
+
+            var nameAndTimePanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+
+            var nameTextBlock = new TextBlock
+            {
+                Text = friend.Username,
+                FontWeight = FontWeights.Bold,
+                FontSize = 16,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = Brushes.LightGray,
+                Margin = new Thickness(0, 0, 20, 0)
+            };
+
+            var dateTimeTextBlock = new TextBlock
+            {
+                Text = time.ToString("dd.MM.yyyy HH:mm"),
+                FontSize = 12,
+                Foreground = Brushes.Gray,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+
+            nameAndTimePanel.Children.Add(nameTextBlock);
+            nameAndTimePanel.Children.Add(dateTimeTextBlock);
+
+            var messageTextBlock = new TextBlock
+            {
+                Text = content,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 5, 0, 0),
+                FontSize = 14,
+                Foreground = Brushes.LightGray
+            };
+
+            innerStackPanel.Children.Add(nameAndTimePanel);
+            innerStackPanel.Children.Add(messageTextBlock);
+            outerStackPanel.Children.Add(ellipse);
+            outerStackPanel.Children.Add(innerStackPanel);
+
+            return outerStackPanel;
+        }
+
+        public void AddMessage(Friend friend, Message message)
+        {
+            if (_chats.TryGetValue(friend.Username, out var mainGrid))
+            {
+                var scrollViewer = (ScrollViewer)mainGrid.Children[0];
+                var chatStackPanel = (StackPanel)scrollViewer.Content;
+                var newMessagePanel = CreateMessagePanel(friend, message.Time, message.Content);
+                chatStackPanel.Children.Add(newMessagePanel);
+            }
+            else
+            {
+                PopulateChat(friend, new List<Message> { message });
             }
         }
 
@@ -362,7 +663,7 @@ namespace ClientMesseger
 
                     lock (Client.relationshipStateLock)
                     {
-                        relation = Client.relationshipState.Find(x => x.Username == username) 
+                        relation = Client.relationshipState.Find(x => x.Username == username)
                             ?? throw new Exception("Error while trying to interact with that user.");
 
                         if (task == RelationshipStateEnum.Accepted || task == RelationshipStateEnum.Blocked)
@@ -477,8 +778,6 @@ namespace ClientMesseger
 
         private void UsernameText_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            //Wenn dieses Fenster maximized ist und man dann in die Settings geht klappt das von der Location her nicht
-            //deswegen dieses if
             Settings settings;
             if (WindowState == WindowState.Maximized)
             {

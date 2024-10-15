@@ -29,6 +29,7 @@ namespace ClientMesseger
                     var profilPic = root.GetProperty("profilPic").GetString();
                     Client.Username = username;
                     Client.ProfilPicture = Client.GetBitmapImageFromBase64String(profilPic!)!;
+
                     if (Client.ProfilPicture == null)
                     {
                         Application.Current.Dispatcher.Invoke(() =>
@@ -36,6 +37,7 @@ namespace ClientMesseger
                             Application.Current.Shutdown();
                         });
                     }
+
                     WriteLoginDataIntoFile(email!, password!);
                     var home = new Home();
                     home.Show();

@@ -53,8 +53,14 @@
             </Ellipse>
         </StackPanel>
 
+        <!--Language Panel-->
         <StackPanel x:Name="LanguagePanel" Visibility="Collapsed" Grid.Column="1" Grid.Row="1">
             
+        </StackPanel>
+
+        <!--Personal Information Panel-->
+        <StackPanel x:Name="PersonalInformationPanel" Visibility="Collapsed" Grid.Column="1" Grid.Row="1">
+
         </StackPanel>
     </Grid>
 </Window>

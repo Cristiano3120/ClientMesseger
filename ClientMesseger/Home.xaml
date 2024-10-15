@@ -65,11 +65,16 @@
                 <ColumnDefinition Width="600*"/>
             </Grid.ColumnDefinitions>
             
-            <!--Chats-->
-            <Grid x:Name="ChatsGrid" Grid.Column="0">
+            <!--ChatsList-->
+            <Grid x:Name="ChatsListGrid" Grid.Column="0">
                 <ListBox x:Name="ChatsList" Background="#222" BorderBrush="#222"></ListBox>
             </Grid>
             
+            <!--Panel for Chat-->
+            <Grid x:Name="PanelChat" Grid.Column="1">
+                
+            </Grid>
+
             <!-- Panel for Friends List -->
             <Grid x:Name="FriendsPanel" Background="#222" HorizontalAlignment="Right" Visibility="Collapsed" RenderTransformOrigin="1,0" Width="600" Grid.Column="1">
                 <Grid.RenderTransform>

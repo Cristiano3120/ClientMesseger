@@ -13,10 +13,10 @@ namespace ClientMesseger
     {
         private readonly Home _homeWindow;
 
-        public Settings(Window window)
+        public Settings(Home window)
         {
             InitializeComponent();
-            _homeWindow = (Home)window;
+            _homeWindow = window;
             ProfilPic.ImageSource = Client.ProfilPicture;
             btnClose.Click += ClientUI.BtnCloseShutdown_Click;
             btnMaximize.Click += ClientUI.BtnMaximize_Click;
@@ -34,19 +34,41 @@ namespace ClientMesseger
 
         private void SettingsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = (ListBoxItem)((ListBox)sender).SelectedItem;
-            var selectedText = selectedItem.Content.ToString();
-
-            switch (selectedText)
+            try
             {
-                case "Profil":
-                    _ = DisplayError.LogAsync("Profil settings panel opend");
-                    ChangeActivePanel(ProfilPanel);
-                    break;
-                case "Language":
-                    Console.WriteLine("language");
-                    ChangeActivePanel(LanguagePanel);
-                    break;
+                var selectedItem = (ListBoxItem)((ListBox)sender).SelectedItem;
+                var selectedSettingAsString = selectedItem.Content.ToString()!;
+
+                var words = selectedSettingAsString.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length > 1)
+                {
+                    selectedSettingAsString = string.Empty;
+                    foreach (var word in words)
+                    {
+                        selectedSettingAsString += word.Trim();
+                    }
+                }
+                var selectedSetting = Enum.Parse<SettingsEnum>(selectedSettingAsString);
+
+                switch (selectedSetting)
+                {
+                    case SettingsEnum.Profil:
+                        _ = DisplayError.LogAsync("Profil settings panel opend");
+                        ChangeActivePanel(ProfilPanel);
+                        break;
+                    case SettingsEnum.Language:
+                        Console.WriteLine("language panel opend");
+                        ChangeActivePanel(LanguagePanel);
+                        break;
+                    case SettingsEnum.PersonalInformation:
+                        _ = DisplayError.LogAsync("Personal information panel opend");
+                        ChangeActivePanel(PersonalInformationPanel);
+                        break;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                DisplayError.DisplayBasicErrorInfos(ex, "Settings", "SettingsList_SelectionChanged");
             }
         }
 
@@ -54,6 +76,7 @@ namespace ClientMesseger
         {
             ProfilPanel.Visibility = Visibility.Collapsed;
             LanguagePanel.Visibility = Visibility.Collapsed;
+            PersonalInformationPanel.Visibility = Visibility.Collapsed;
             stackPanelToActivate.Visibility = Visibility.Visible;
         }
 
@@ -71,7 +94,6 @@ namespace ClientMesseger
 
         private void Ellipse_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            // Open the file explorer
             var openFileDiaLogAsnycAsnyc = new OpenFileDialog()
             {
                 Filter = "Image files (*.png;*.jpeg;*.jpg)|*.png;*.jpeg;*.jpg"
