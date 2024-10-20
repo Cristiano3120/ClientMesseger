@@ -9,6 +9,8 @@ namespace ClientMesseger
 {
     internal class HandleServerMessages
     {
+        public static float Volume { private get; set; } = 1;
+
         //Code 7
         public static void FeedbackAccountCreation(JsonElement root)
         {
@@ -40,6 +42,7 @@ namespace ClientMesseger
 
                     WriteLoginDataIntoFile(email!, password!);
                     var home = new Home();
+                    home.Hide();
                     home.Show();
                     ClientUI.CloseAllWindowsExceptOne(home);
                 }
@@ -152,13 +155,12 @@ namespace ClientMesseger
         //Code 13
         public static void ReceiveRelationshipStates(JsonElement root)
         {
-            Console.WriteLine(root.ToString());
             if (root.TryGetProperty("friends", out var friendsElement) && friendsElement.ValueKind == JsonValueKind.Array)
             {
                 var friendsList = JsonSerializer.Deserialize<List<Friend>>(friendsElement.GetRawText());
                 foreach (var friend in friendsList!)
                 {
-                    _ = DisplayError.LogAsync($"{friend.Username}: {friend.ProfilPic}");
+                    _ = DisplayError.LogAsync($"{friend.Username}:");
                     lock (Client.relationshipStateLock)
                     {
                         Client.relationshipState.Add(friend);
@@ -206,6 +208,65 @@ namespace ClientMesseger
                 home?.PopulateFriendsList();
                 home?.PopulatePendingFriendRequestsList();
                 home?.PopulateBlockedList();
+            });
+        }
+
+        //Code 19
+        public static void ReceiveMessage(JsonElement root)
+        {
+            var user = new UserAfterLogin()
+            {
+                Username = root.GetProperty("usernameSender").GetString()!,
+            };
+
+            var message = new Message()
+            {
+                Sender = user,
+                Content = root.GetProperty("content").GetString()!,
+                Time = root.GetProperty("time").GetDateTime(),
+            };
+
+            string profilPic;
+            lock (Client.relationshipStateLock)
+            {
+                profilPic = Client.relationshipState.Find(x => x.Username == user.Username)!.ProfilPic;
+            }
+
+            var friend = new Friend()
+            {
+                ProfilPic = profilPic,
+                Status = RelationshipStateEnum.Accepted,
+                Username = user.Username,
+            };
+
+            var soundPlayer = new MediaPlayer();
+            soundPlayer.Open(new Uri(@"C:\Users\Crist\source\repos\ClientMesseger\ClientMesseger\alert-234711.wav"));
+            soundPlayer.Volume = Volume;
+            soundPlayer.Play();
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var home = ClientUI.GetWindow<Home>();
+                home?.AddMessage(friend, message);
+            });
+        }
+
+        //Code 20
+        public static void ReceiveChats(JsonElement root)
+        {
+            var username = root.GetProperty("usernameFriend").GetString()!;
+            Friend friend;
+
+            lock (Client.relationshipStateLock)
+            {
+                friend = Client.relationshipState.Find(x => x.Username == username) ?? throw new Exception("Friend not found| (ReceiveChats)"); 
+            }
+
+            var messages = root.GetProperty("messages").Deserialize<List<Message>>() ?? throw new Exception("Deserilisation went wrong| (ReceiveChats)");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var home = ClientUI.GetWindow<Home>();
+                home?.PopulateChat(friend, messages);
             });
         }
 

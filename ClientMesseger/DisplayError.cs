@@ -47,7 +47,7 @@ namespace ClientMesseger
             try
             {
                 Console.WriteLine(log);
-                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.UtcNow:HH:mm:ss}]"));
+                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.Now:HH:mm:ss}]"));
                 foreach (var (content, timestamp) in _loggingList)
                 {
                     using (var writer = new StreamWriter(_loggingFile, true))
@@ -58,7 +58,7 @@ namespace ClientMesseger
             }
             catch (Exception)
             {
-                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.UtcNow:HH:mm:ss}]"));
+                _loggingList.Enqueue((log.ToString()!, $"[{DateTime.Now:HH:mm:ss}]"));
             }
         }
     }

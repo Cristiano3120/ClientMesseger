@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace ClientMesseger
 {
-    #pragma warning disable CS8618
+#pragma warning disable CS8618
     internal static class Security
     {
         private static RSAParameters _publicServerRSAKey;
@@ -82,6 +82,7 @@ namespace ClientMesseger
 
         public static JsonElement? DecryptMessage(byte[] buffer)
         {
+            Console.WriteLine("Length: " + buffer.Length);
             var decryptionMode = EncryptionMode.AES;
             while (decryptionMode >= EncryptionMode.None)
             {
@@ -97,11 +98,16 @@ namespace ClientMesseger
                 }
                 catch (Exception ex) when (ex is CryptographicException || ex is JsonException)
                 {
+                    DisplayError.DisplayBasicErrorInfos(ex, "Security", "DecryptMessage");
                     if (decryptionMode > 0)
                     {
                         decryptionMode -= 2;
                         _ = DisplayError.LogAsync($"Couldnt decrypt the data." +
                         $" Trying again with {decryptionMode} decryption");
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
             }
@@ -110,6 +116,7 @@ namespace ClientMesseger
 
         private static string DecryptDataAES(byte[] encryptedData)
         {
+            _ = DisplayError.LogAsync("Decrypting with Aes");
             var aes = _privateAes;
             aes.Key = _privateAes.Key;
             aes.IV = _privateAes.IV;

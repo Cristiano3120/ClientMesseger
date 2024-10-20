@@ -26,14 +26,23 @@ namespace ClientMesseger
             UsernameText.Text = Client.Username;
             _stopwatch = new Stopwatch();
             _chats = new();
-            ChatsList.SelectionChanged += (s, args) =>
+            ChatsList.SelectionChanged += async (s, args) =>
             {
-                Console.WriteLine("Changed");
                 var selectedItem = (ListBoxItem)ChatsList.SelectedItem;
                 var key = (string)selectedItem.Tag;
-                var grid = _chats[key];
-                PanelChat.Children.Clear();
-                PanelChat.Children.Add(grid);
+                if (_chats.TryGetValue(key, out var grid))
+                {
+                    grid = _chats[key];
+                    PanelChat.Children.Clear();
+                    PanelChat.Children.Add(grid);
+                }
+                else
+                {
+                    await Task.Delay(1000);
+                    grid = _chats[key];
+                    PanelChat.Children.Clear();
+                    PanelChat.Children.Add(grid);
+                }
             };
         }
 
@@ -68,7 +77,7 @@ namespace ClientMesseger
                         stackPanel.Visibility = Visibility.Visible;
                     }
                 }
-                
+
                 translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
             }
             else
@@ -86,7 +95,6 @@ namespace ClientMesseger
                     Duration = TimeSpan.FromSeconds(0.3)
                 };
 
-                //Der zu letzt geöffnete Chat
                 slideInAnimation.Completed += (sender, args) =>
                 {
                     if (ChatsList.SelectedIndex != -1)
@@ -101,6 +109,48 @@ namespace ClientMesseger
                     }
                 };
                 translateTransform.BeginAnimation(TranslateTransform.XProperty, slideInAnimation);
+            }
+        }
+
+        public void CloseAllPanels()
+        {
+            var panels = new List<(Grid, TranslateTransform)>()
+            {
+                (FriendsPanel, FriendsPanelTranslateTransform),
+                (PendingFriendRequestsPanel, PendingFriendRequestsTranslateTransform),
+                (BlockedPanel, BlockedPanelTranslateTransform),
+                (AddFriendsPanel, AddFriendsPanelTranslateTransform),
+            };
+
+            foreach (var (grid, translateTransform) in panels)
+            {
+                if (grid.Visibility == Visibility.Visible)
+                {
+                    var slideOutAnimation = new DoubleAnimation
+                    {
+                        From = 0,
+                        To = grid.Width,
+                        Duration = TimeSpan.FromSeconds(0.3)
+                    };
+
+                    slideOutAnimation.Completed += (s, a) =>
+                    {
+                        grid.Visibility = Visibility.Collapsed;
+                    };
+
+                    if (ChatsList.SelectedIndex != -1)
+                    {
+                        var listBoxItem = (ListBoxItem)ChatsList.SelectedItem;
+                        var key = (string)listBoxItem.Tag;
+
+                        if (_chats.TryGetValue(key, out var stackPanel))
+                        {
+                            stackPanel.Visibility = Visibility.Visible;
+                        }
+                    }
+
+                    translateTransform.BeginAnimation(TranslateTransform.XProperty, slideOutAnimation);
+                }
             }
         }
 
@@ -389,14 +439,6 @@ namespace ClientMesseger
                     Tag = friend.Username
                 };
                 ChatsList.Items.Add(listBoxItem);
-                PopulateChat(friend, new List<Message> { new Message() { Content = "Das ist ein Test", Time = DateTime.Now } });
-                AddMessage(friend, new Message() { Content = "Message 2", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 3", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
-                AddMessage(friend, new Message() { Content = "Message 4", Time = DateTime.Now });
             }
         }
 
@@ -421,7 +463,7 @@ namespace ClientMesseger
                 VerticalAlignment = VerticalAlignment.Top
             };
 
-            foreach (var (time, content) in messages)
+            foreach (var (sender, time, content) in messages)
             {
                 var outerStackPanel = new StackPanel
                 {
@@ -458,7 +500,7 @@ namespace ClientMesseger
 
                 var nameTextBlock = new TextBlock
                 {
-                    Text = friend.Username,
+                    Text = sender.Username,
                     FontWeight = FontWeights.Bold,
                     FontSize = 16,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -468,7 +510,7 @@ namespace ClientMesseger
 
                 var dateTimeTextBlock = new TextBlock
                 {
-                    Text = time.ToString("dd.MM.yyyy HH:mm"),
+                    Text = time.ToLocalTime().ToString("dd.MM.yyyy HH:mm"),
                     FontSize = 12,
                     Foreground = Brushes.Gray,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -513,31 +555,49 @@ namespace ClientMesseger
                 Background = (SolidColorBrush)new BrushConverter().ConvertFromString("#403c44")!,
                 Margin = new Thickness(0, 0, 10, 0)
             };
-            
+
             void SendButtonClick(object sender, RoutedEventArgs args)
             {
                 _ = DisplayError.LogAsync("Sent Message");
                 var listBoxItem = (ListBoxItem)ChatsList.SelectedItem;
                 var friendUsername = (string)listBoxItem.Tag;
-                
+
                 var payload = new
                 {
                     code = 18,
                     message = textBox.Text,
                     friendUsername = friend.Username,
                     username = Client.Username,
+                    time = DateTime.Now,
                 };
                 var jsonString = JsonSerializer.Serialize(payload);
                 _ = Client.SendPayloadAsync(jsonString);
+
+                var message = new Message()
+                {
+                    Content = textBox.Text,
+                    Sender = new UserAfterLogin { Username = Client.Username! },
+                    Time = DateTime.Now,
+                };
+                textBox.Text = string.Empty;
+                AddMessage(friend, message);
             }
 
             var sendButton = new Button
             {
                 Content = "Send",
                 Width = 100,
-                Height = 30, 
+                Height = 30,
             };
             sendButton.Click += SendButtonClick;
+
+            textBox.KeyDown += (sender, args) =>
+            {
+                if (args.Key == System.Windows.Input.Key.Enter)
+                {
+                    SendButtonClick(new object(), new RoutedEventArgs());
+                }
+            };
 
             inputPanel.Children.Add(textBox);
             inputPanel.Children.Add(sendButton);
@@ -557,10 +617,14 @@ namespace ClientMesseger
             }
 
             _chats.AddOrUpdate(friend.Username, AddFunc, UpdateFunc);
+            scrollViewer.ScrollToEnd();
         }
 
-        private static StackPanel CreateMessagePanel(Friend friend, DateTime time, string content)
+        private static StackPanel CreateMessagePanel(Friend friend, Message message)
         {
+            message.Deconstruct(out var sender, out var time, out var content);
+            time = time.ToLocalTime();
+
             var outerStackPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -570,9 +634,20 @@ namespace ClientMesseger
 
             var imageBrush = new ImageBrush
             {
-                ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic),
                 Stretch = Stretch.UniformToFill,
             };
+
+            string username;
+            if (sender.Username == Client.Username)
+            {
+                imageBrush.ImageSource = Client.ProfilPicture;
+                username = Client.Username;
+            }
+            else
+            {
+                imageBrush.ImageSource = Client.GetBitmapImageFromBase64String(friend.ProfilPic);
+                username = friend.Username;
+            }
 
             var ellipse = new Ellipse
             {
@@ -596,7 +671,7 @@ namespace ClientMesseger
 
             var nameTextBlock = new TextBlock
             {
-                Text = friend.Username,
+                Text = username,
                 FontWeight = FontWeights.Bold,
                 FontSize = 16,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -639,8 +714,9 @@ namespace ClientMesseger
             {
                 var scrollViewer = (ScrollViewer)mainGrid.Children[0];
                 var chatStackPanel = (StackPanel)scrollViewer.Content;
-                var newMessagePanel = CreateMessagePanel(friend, message.Time, message.Content);
+                var newMessagePanel = CreateMessagePanel(friend, message);
                 chatStackPanel.Children.Add(newMessagePanel);
+                scrollViewer.ScrollToEnd();
             }
             else
             {
@@ -659,7 +735,7 @@ namespace ClientMesseger
                 if (sender is Button button && button.Tag is (string username, RelationshipStateEnum task))
                 {
                     Friend? relation;
-                    Console.WriteLine(task.ToVerb());
+                    _ = DisplayError.LogAsync(task.ToVerb());
 
                     lock (Client.relationshipStateLock)
                     {

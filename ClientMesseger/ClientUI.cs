@@ -122,6 +122,32 @@ namespace ClientMesseger
             _ = DisplayError.LogAsync("Error(ClientUI.ChangeWindowState(): var window was null)");
         }
 
+        /// <typeparam name="T">The type of the wanted child</typeparam>
+        /// <returns></returns>
+        public static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null)
+                return default;
+
+            var childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (var i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is T wantedChild)
+                {
+                    return wantedChild;
+                }
+
+                var result = FindVisualChild<T>(child);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            return default;
+        }
+
         /// <summary>
         /// Searches for the parent of the enterd object.
         /// </summary>

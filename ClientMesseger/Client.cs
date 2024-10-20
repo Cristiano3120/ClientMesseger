@@ -15,7 +15,7 @@ namespace ClientMesseger
     /// </summary>
     internal static class Client
     {
-        #pragma warning disable CS8618
+#pragma warning disable CS8618
         private static TcpClient _client;
         public static BitmapImage ProfilPicture { get; set; }
         public static string? Username { get; set; }
@@ -25,8 +25,6 @@ namespace ClientMesseger
 
         public static async Task Start()
         {
-            relationshipState.Add(new Friend() { Username = "Cris", ProfilPic = "", Status = RelationshipStateEnum.Accepted});
-            relationshipState.Add(new Friend() { Username = "Cris2", ProfilPic = "", Status = RelationshipStateEnum.Accepted});
             AllocConsole();
             DisplayError.Initialize();
             _client = new TcpClient();
@@ -69,6 +67,7 @@ namespace ClientMesseger
                 loadingScreen.Show();
                 ClientUI.CloseAllWindowsExceptOne(loadingScreen);
             });
+            relationshipState.Clear();
         }
 
         private static void TryToAutoLogin()
@@ -103,18 +102,33 @@ namespace ClientMesseger
 
         private static async Task ListenForMessages()
         {
-            var buffer = new byte[32768];
+            var buffer = new byte[65536];
             while (_client.Connected)
             {
                 try
                 {
                     var bytesRead = await _client.Client.ReceiveAsync(buffer);
+                    Console.WriteLine($"BytesRead: {bytesRead}");
                     var tempBuffer = new byte[bytesRead];
+                    Console.WriteLine($"tempBuffer: {tempBuffer.Length}");
                     Array.Copy(buffer, tempBuffer, bytesRead);
                     var root = Security.DecryptMessage(tempBuffer) ?? throw new Exception("Root was null");
                     var code = root.GetProperty("code").GetByte();
                     _ = DisplayError.LogAsync($"Received code {code}");
-                    _ = DisplayError.LogAsync($"Received: {root}");
+                    var toLog = root.ToString();
+                    if (toLog.Contains("Pic") && toLog.Contains("=="))
+                    {
+                        var picStartIndex = toLog.IndexOf("Pic");
+                        var endIndex = toLog.IndexOf("==") + 2;
+                        var lengthToRemove = endIndex - picStartIndex;
+                        var cleanedLog = toLog.Remove(picStartIndex, lengthToRemove);
+                        _ = DisplayError.LogAsync(cleanedLog);
+                    }
+                    else
+                    {
+                        _ = DisplayError.LogAsync(root.ToString());
+                    }
+
 
                     switch (code)
                     {
@@ -144,10 +158,18 @@ namespace ClientMesseger
                             HandleServerMessages.ReceiveRelationshipStates(root);
                             break;
                         case 16: //Server is ready to receive messages
+#if DEBUG == true
                             TryToAutoLogin();
+#endif
                             break;
                         case 17: //Updating a relationship(blocked, deleted etc..)
                             HandleServerMessages.UpdateRelationship(root);
+                            break;
+                        case 19: //Receiving a message
+                           HandleServerMessages.ReceiveMessage(root);
+                            break;
+                        case 20: //Receive Chats
+                            HandleServerMessages.ReceiveChats(root);
                             break;
                     }
                 }
